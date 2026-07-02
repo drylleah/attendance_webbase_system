@@ -10,7 +10,6 @@ function requireLogin(req, res, next) {
 // ---- GET all time records (search + date range + pagination) ----
 router.get('/', requireLogin, async (req, res) => {
   const { search, from, to, page = 1, limit = 5 } = req.query;
-  console.log("Search:", req.query.search);
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   const conditions = [];
