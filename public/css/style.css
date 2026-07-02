@@ -1,0 +1,265 @@
+/* ============================================
+   ATTENDANCE SYSTEM — style.css
+   Color palette inspired by the design mockup
+   ============================================ */
+
+/* ---- Variables ---- */
+:root {
+  --green-dark:   #1a4d3e;
+  --green-main:   #1e5f4e;
+  --green-hover:  #174539;
+  --green-icon-bg:#1e5f4e;
+  --bg-page:      #e8ece9;
+  --bg-card:      #ffffff;
+  --bg-input:     #f9fafb;
+  --border:       #d1d5db;
+  --border-focus: #1e5f4e;
+  --text-dark:    #111827;
+  --text-body:    #4b5563;
+  --text-label:   #374151;
+  --text-muted:   #9ca3af;
+  --text-link:    #1e5f4e;
+  --error-bg:     #fef2f2;
+  --error-text:   #b91c1c;
+  --error-border: #fca5a5;
+  --radius-card:  16px;
+  --radius-input: 10px;
+  --radius-btn:   10px;
+  --shadow-card:  0 8px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.06);
+  --font-main:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ---- Body ---- */
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-page);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+/* ---- Card ---- */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: 44px 40px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ---- Icon Badge ---- */
+.icon-badge {
+  width: 64px;
+  height: 64px;
+  background: var(--green-icon-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.icon-badge svg {
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  stroke: #fff;
+}
+
+/* ---- Heading ---- */
+.card-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-align: center;
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
+}
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-body);
+  text-align: center;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+/* ---- Divider ---- */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+/* ---- Form Groups ---- */
+.form-group {
+  margin-bottom: 18px;
+}
+.form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-label);
+}
+.forgot-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-link);
+  text-decoration: none;
+  cursor: pointer;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+/* ---- Input Wrapper ---- */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+.input-icon svg { width: 18px; height: 18px; }
+
+.form-input {
+  width: 100%;
+  padding: 12px 44px 12px 44px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--bg-input);
+  font-size: 14px;
+  color: var(--text-dark);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.form-input::placeholder { color: var(--text-muted); }
+.form-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(30,95,78,0.10);
+  background: #fff;
+}
+
+/* Toggle password visibility */
+.toggle-pw {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  transition: color 0.15s;
+}
+.toggle-pw:hover { color: var(--text-dark); }
+.toggle-pw svg { width: 18px; height: 18px; }
+
+/* ---- Error Message ---- */
+.error-msg {
+  display: none;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.error-msg.show { display: block; }
+
+/* ---- Sign In Button ---- */
+.btn-signin {
+  width: 100%;
+  padding: 14px;
+  background: var(--green-main);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  transition: background 0.18s, transform 0.1s;
+  letter-spacing: 0.2px;
+}
+.btn-signin:hover  { background: var(--green-hover); }
+.btn-signin:active { transform: scale(0.99); }
+.btn-signin:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.btn-signin svg { width: 18px; height: 18px; }
+
+/* ---- Loading Spinner ---- */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Dashboard (hidden by default) ---- */
+.dashboard { display: none; }
+.dashboard.active { display: block; }
+.login-card.hidden { display: none; }
+
+.dashboard-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: 36px 40px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+.dashboard-card h1 {
+  font-size: 22px;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+.dashboard-card p {
+  color: var(--text-body);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.btn-logout {
+  padding: 10px 24px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btn-logout:hover { background: #dc2626; }
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  .card { padding: 32px 20px 28px; }
+  .card-title { font-size: 22px; }
+}
