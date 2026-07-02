@@ -3,23 +3,24 @@
 //  Handles login form, API calls, session check
 // ============================================
 
-const loginCard    = document.getElementById('loginCard');
-const dashCard     = document.getElementById('dashCard');
-const loginForm    = document.getElementById('loginForm');
+const loginCard     = document.getElementById('loginCard');
+const dashCard      = document.getElementById('dashCard');
+const loginForm     = document.getElementById('loginForm');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
-const togglePwBtn  = document.getElementById('togglePw');
-const errorMsg     = document.getElementById('errorMsg');
-const signinBtn    = document.getElementById('signinBtn');
-const btnText      = document.getElementById('btnText');
-const btnIcon      = document.getElementById('btnIcon');
-const dashName     = document.getElementById('dashName');
-const logoutBtn    = document.getElementById('logoutBtn');
+const togglePwBtn   = document.getElementById('togglePw');
+const errorMsg      = document.getElementById('errorMsg');
+const signinBtn     = document.getElementById('signinBtn');
+const btnText       = document.getElementById('btnText');
+const btnIcon       = document.getElementById('btnIcon');
+const dashName      = document.getElementById('dashName');
+const logoutBtn     = document.getElementById('logoutBtn');
 
 // ---- Toggle Password Visibility ----
 togglePwBtn.addEventListener('click', () => {
   const isPassword = passwordInput.type === 'password';
   passwordInput.type = isPassword ? 'text' : 'password';
+
   // Swap icon
   togglePwBtn.innerHTML = isPassword
     ? `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
@@ -36,6 +37,7 @@ function showError(msg) {
   errorMsg.textContent = msg;
   errorMsg.classList.add('show');
 }
+
 function hideError() {
   errorMsg.classList.remove('show');
 }
@@ -43,6 +45,7 @@ function hideError() {
 // ---- Set Button Loading State ----
 function setLoading(loading) {
   signinBtn.disabled = loading;
+
   if (loading) {
     btnText.textContent = 'Signing in...';
     btnIcon.innerHTML = '<div class="spinner"></div>';
@@ -65,8 +68,10 @@ function showDashboard(username) {
 function showLogin() {
   dashCard.classList.remove('active');
   loginCard.classList.remove('hidden');
+
   usernameInput.value = '';
   passwordInput.value = '';
+
   hideError();
 }
 
@@ -79,7 +84,7 @@ loginForm.addEventListener('submit', async (e) => {
   const password = passwordInput.value;
 
   if (!username || !password) {
-    showError('Pakiusap punan ang lahat ng fields.');
+    showError('Please fill in all fields.');
     return;
   }
 
@@ -88,9 +93,12 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ username, password })
     });
+
     const data = await res.json();
 
     if (res.ok) {
@@ -99,7 +107,7 @@ loginForm.addEventListener('submit', async (e) => {
       showError(data.error || 'Invalid username or password.');
     }
   } catch (err) {
-    showError('Hindi ma-connect sa server. Subukan ulit.');
+    showError('Unable to connect to the server. Please try again.');
   } finally {
     setLoading(false);
   }
@@ -107,7 +115,10 @@ loginForm.addEventListener('submit', async (e) => {
 
 // ---- Logout ----
 logoutBtn.addEventListener('click', async () => {
-  await fetch('/api/auth/logout', { method: 'POST' });
+  await fetch('/api/auth/logout', {
+    method: 'POST'
+  });
+
   showLogin();
 });
 
@@ -116,10 +127,11 @@ logoutBtn.addEventListener('click', async () => {
   try {
     const res = await fetch('/api/auth/me');
     const data = await res.json();
+
     if (data.loggedIn) {
       window.location.href = "/dashboard.html";
     }
   } catch {
-    // Not logged in — show login page (default)
+    // User is not logged in — display the login page by default.
   }
 })();

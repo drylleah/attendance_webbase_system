@@ -421,3 +421,49 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
 .toast.show   { opacity: 1; transform: translateY(0); }
 .toast.success { background: var(--green-main); }
 .toast.error   { background: #dc2626; }
+
+/* ========== PRINT (Export PDF) ========== */
+@media print {
+  /* Hide everything not part of the data */
+  .sidebar,
+  .topbar,
+  .page-header,
+  .stat-card,
+  .filter-card,
+  .table-footer,
+  .modal-overlay,
+  .toast {
+    display: none !important;
+  }
+
+  /* Reset layout wrappers so only the table flows on the page */
+  body {
+    display: block;
+    overflow: visible;
+    background: #fff;
+  }
+  .main {
+    margin-left: 0;
+    height: auto;
+    overflow: visible;
+    display: block;
+  }
+  .page-content {
+    padding: 0;
+    overflow: visible;
+    display: block;
+  }
+  .table-card {
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    display: block;
+  }
+  .table-card .table-scroll {
+    overflow: visible;
+  }
+
+  table { font-size: 11px; }
+  thead tr { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tbody tr:hover { background: none; }
+}

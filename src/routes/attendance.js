@@ -38,7 +38,7 @@ router.get('/', requireLogin, async (req, res) => {
 
 // ---- POST new attendance record ----
 router.post('/', requireLogin, async (req, res) => {
-  const { id_number, last_name, first_name, middle_initial, time_in, date } = req.body;
+  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date } = req.body;
 
   if (!id_number || !last_name || !first_name) {
     return res.status(400).json({ error: 'ID Number, Last Name, and First Name are required.' });
@@ -46,14 +46,15 @@ router.post('/', requireLogin, async (req, res) => {
 
   try {
     // Combine date + time_in into a datetime string
-    const dateStr  = date || new Date().toISOString().slice(0, 10);
-    const timeStr  = time_in || new Date().toTimeString().slice(0, 8);
-    const datetime = `${dateStr} ${timeStr}`;
+    const dateStr      = date || new Date().toISOString().slice(0, 10);
+    const timeInStr     = time_in || new Date().toTimeString().slice(0, 8);
+    const timeInDate    = `${dateStr} ${timeInStr}`;
+    const timeOutDate   = time_out ? `${dateStr} ${time_out}` : null;
 
     await db.query(
-      `INSERT INTO attendance (id_number, last_name, first_name, middle_initial, time_in, date)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [id_number, last_name, first_name, middle_initial || null, datetime, dateStr]
+      `INSERT INTO attendance (id_number, last_name, first_name, middle_initial, time_in, time_out, date)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id_number, last_name, first_name, middle_initial || null, timeInDate, timeOutDate, dateStr]
     );
     res.json({ message: 'Record added successfully.' });
   } catch (err) {
