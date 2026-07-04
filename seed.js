@@ -60,6 +60,20 @@ async function seed() {
         saved_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS datetime_config (
+        id INT PRIMARY KEY DEFAULT 1,
+        mode ENUM('automatic','manual') DEFAULT 'automatic',
+        start_date DATE,
+        start_time TIME,
+        end_date DATE,
+        end_time TIME,
+        last_triggered_at DATETIME,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    // Ensure a single config row always exists
+    await db.execute(`INSERT IGNORE INTO datetime_config (id, mode) VALUES (1, 'automatic')`);
     console.log('✅ Core tables ready.');
 
     // ---- Add profile columns to users if missing ----

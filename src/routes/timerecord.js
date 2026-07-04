@@ -9,7 +9,7 @@ function requireLogin(req, res, next) {
 
 // ---- GET all time records (search + date range + pagination) ----
 router.get('/', requireLogin, async (req, res) => {
-  const { search, from, to, page = 1, limit = 5 } = req.query;
+  const { search, from, to, month, page = 1, limit = 5 } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   const conditions = [];
@@ -20,8 +20,9 @@ router.get('/', requireLogin, async (req, res) => {
     const like = `%${search}%`;
     params.push(like, like, like, like);
   }
-  if (from) { conditions.push('date >= ?'); params.push(from); }
-  if (to)   { conditions.push('date <= ?'); params.push(to);   }
+  if (from)  { conditions.push('date >= ?'); params.push(from); }
+  if (to)    { conditions.push('date <= ?'); params.push(to);   }
+  if (month) { conditions.push('MONTH(date) = ?'); params.push(parseInt(month)); }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 

@@ -155,17 +155,62 @@
             </div>
           </div>
 
-          <!-- Date and Time (placeholder) -->
+          <!-- Date and Time -->
           <div class="settings-section" id="sectionDateTime">
             <div class="profile-card">
-              <div class="profile-card-header">
-                <div class="profile-card-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+              <div class="profile-card-header dt-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div class="profile-card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                  </div>
+                  <span class="profile-card-title">Date and Time</span>
                 </div>
-                <span class="profile-card-title">Date and Time Settings</span>
+                <div class="dt-toggle">
+                  <button type="button" class="dt-toggle-btn active" id="dtModeAutomatic" onclick="setDtMode('automatic')">Automatic</button>
+                  <button type="button" class="dt-toggle-btn" id="dtModeManual" onclick="setDtMode('manual')">Manual</button>
+                </div>
               </div>
               <div class="profile-card-body">
-                <p style="color:#9ca3af; font-size:14px;">Coming soon — configure auto-save schedule and other time settings here.</p>
+
+                <!-- Automatic View -->
+                <div class="dt-view" id="dtAutomaticView">
+                  <div class="dt-current-box">
+                    <div class="dt-current-label">Current System Time</div>
+                    <div class="dt-current-value" id="dtCurrentValue">—</div>
+                  </div>
+                  <p class="dt-hint">Attendance saved with "Save to Time Record" on the Dashboard will always use this current date and time.</p>
+                </div>
+
+                <!-- Manual View -->
+                <div class="dt-view" id="dtManualView" style="display:none;">
+                  <span class="dt-badge">Start</span>
+                  <div class="dt-row">
+                    <div class="field">
+                      <label>Set Date</label>
+                      <input type="date" id="dtStartDate">
+                    </div>
+                    <div class="field">
+                      <label>Set Time</label>
+                      <input type="time" id="dtStartTime">
+                    </div>
+                  </div>
+
+                  <span class="dt-badge" style="margin-top:20px;">End</span>
+                  <div class="dt-row">
+                    <div class="field">
+                      <label>Set Date</label>
+                      <input type="date" id="dtEndDate">
+                    </div>
+                    <div class="field">
+                      <label>Set Time</label>
+                      <input type="time" id="dtEndTime">
+                    </div>
+                  </div>
+
+                  <button class="dt-apply-btn" id="dtApplyBtn">Apply</button>
+                  <p class="dt-hint">Once applied, attendance will automatically be saved to Time Record the moment the End date and time is reached.</p>
+                </div>
+
               </div>
             </div>
           </div>

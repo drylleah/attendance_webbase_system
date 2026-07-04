@@ -9,12 +9,14 @@ const totalRecords = document.getElementById('totalRecords');
 const searchInput  = document.getElementById('searchInput');
 const dateFrom     = document.getElementById('dateFrom');
 const dateTo       = document.getElementById('dateTo');
+const monthFilter  = document.getElementById('monthFilter');
 const modalOverlay = document.getElementById('modalOverlay');
 const toast        = document.getElementById('toast');
 
 let currentSearch = '';
 let currentFrom   = '';
 let currentTo     = '';
+let currentMonth  = '';
 
 // ---- Session Check ----
 (async function checkSession() {
@@ -70,21 +72,23 @@ function renderTable(records, total) {
   }
   emptyState.style.display = 'none';
 
-  records.forEach((rec, idx) => {
-    const no      = String(idx + 1).padStart(3, '0');
+  records.forEach((rec) => {
     const timeIn  = formatTime(rec.time_in);
     const timeOut = formatTime(rec.time_out);
     const dateStr = formatDate(rec.time_in || rec.date);
     const [tiTime, tiAmPm] = timeIn  ? timeIn.split(' ')  : [null, null];
     const [toTime, toAmPm] = timeOut ? timeOut.split(' ') : [null, null];
+    const fullName = rec.last_name || rec.first_name
+      ? `${rec.last_name || ''}, ${rec.first_name || ''}${rec.middle_initial ? ' ' + rec.middle_initial + '.' : ''}`.trim()
+      : '';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="td-no">${no}</td>
       <td class="td-id">${rec.id_number || '—'}</td>
-      <td>${rec.last_name  || '—'}</td>
-      <td>${rec.first_name || '—'}</td>
-      <td>${rec.middle_initial || '—'}</td>
+      <td class="col-last">${rec.last_name  || '—'}</td>
+      <td class="col-first">${rec.first_name || '—'}</td>
+      <td class="col-mi">${rec.middle_initial || '—'}</td>
+      <td class="col-fullname">${fullName || '—'}</td>
       <td>${tiTime
         ? `<div class="time-in-block"><div class="t">${tiTime}</div><div class="ap">${tiAmPm}</div></div>`
         : '<span class="time-empty">--:--</span>'}</td>
@@ -106,6 +110,7 @@ async function loadRecords() {
       search: currentSearch,
       from:   currentFrom,
       to:     currentTo,
+      month:  currentMonth,
       limit:  9999 // load all
     });
     const res  = await fetch(`/api/timerecord?${params}`);
@@ -130,6 +135,9 @@ searchInput.addEventListener('input', () => {
 // ---- Date Range ----
 dateFrom.addEventListener('change', () => { currentFrom = dateFrom.value; loadRecords(); });
 dateTo.addEventListener('change',   () => { currentTo   = dateTo.value;   loadRecords(); });
+
+// ---- Month Filter ----
+monthFilter.addEventListener('change', () => { currentMonth = monthFilter.value; loadRecords(); });
 
 // ---- Export PDF ----
 document.getElementById('btnExport').addEventListener('click', () => {

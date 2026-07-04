@@ -63,12 +63,6 @@
 
     <!-- Topbar -->
     <header class="topbar">
-      <div class="search-bar">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-        </svg>
-        <input type="text" placeholder="Search students or staff...">
-      </div>
       <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" /></svg></button>
       <button class="icon-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg></button>
     </header>
@@ -84,8 +78,8 @@
         </div>
         <div class="page-header-right">
           <button class="btn btn-export" id="btnExport">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
-            Export PDF
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+            Preview Time Records
           </button>
           <button class="btn btn-new-entry" id="btnNewEntry">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -114,12 +108,32 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
           <input type="text" id="searchInput" placeholder="Search by ID or Name...">
         </div>
-        <div>
-          <div class="filter-label" style="margin-bottom:10px;">Date Range</div>
-          <div class="date-range-row">
-            <input type="date" class="date-input" id="dateFrom">
-            <span class="date-sep">to</span>
-            <input type="date" class="date-input" id="dateTo">
+        <div class="filter-row">
+          <div>
+            <div class="filter-label" style="margin-bottom:10px;">Date Range</div>
+            <div class="date-range-row">
+              <input type="date" class="date-input" id="dateFrom">
+              <span class="date-sep">to</span>
+              <input type="date" class="date-input" id="dateTo">
+            </div>
+          </div>
+          <div>
+            <div class="filter-label" style="margin-bottom:10px;">Month</div>
+            <select class="date-input" id="monthFilter">
+              <option value="">All Months</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
           </div>
         </div>
       </div>
@@ -130,11 +144,11 @@
         <table>
           <thead>
             <tr>
-              <th>No.</th>
               <th>ID No.</th>
-              <th>Last Name</th>
-              <th>First Name</th>
-              <th>M.I.</th>
+              <th class="col-last">Last Name</th>
+              <th class="col-first">First Name</th>
+              <th class="col-mi">M.I.</th>
+              <th class="col-fullname">Full Name</th>
               <th>Time In</th>
               <th>Time Out</th>
               <th>Date</th>

@@ -295,6 +295,25 @@ body {
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
+.mode-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+.mode-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  flex-shrink: 0;
+}
+.mode-indicator.manual .mode-dot { background: #fbbf24; }
 
 /* ========== STATS ROW ========== */
 .stats-row {

@@ -100,6 +100,10 @@
         <div class="welcome-right">
           <div class="welcome-date" id="liveDate">—</div>
           <div class="welcome-time" id="liveTime">—</div>
+          <div class="mode-indicator" id="modeIndicator">
+            <span class="mode-dot"></span>
+            <span id="modeIndicatorText">Automatic Mode</span>
+          </div>
         </div>
       </div>
 
@@ -152,7 +156,6 @@
             <thead>
               <tr>
                 <th class="row-check"><input type="checkbox" id="selectAll"></th>
-                <th class="center">No.</th>
                 <th>ID Number</th>
                 <th>Last Name</th>
                 <th>First Name</th>
@@ -200,6 +203,10 @@
         <div class="form-group">
           <label>Time In</label>
           <input type="time" id="f_timein" step="1">
+        </div>
+        <div class="form-group">
+          <label>Time Out</label>
+          <input type="time" id="f_timeout" step="1">
         </div>
         <div class="form-group full">
           <label>Date</label>

@@ -3,12 +3,15 @@
    ============================================ */
 
 :root {
-  --sidebar-bg:       #161c1a;
-  --sidebar-active:   #1e2a27;
-  --sidebar-hover:    #1a2420;
-  --sidebar-border:   #2a3530;
+  --sidebar-bg:       #fdfffe;
+  
+  --sidebar-active:   #cff7e6;
+  --sidebar-hover:    #cff7e6;
+
+  --sidebar-border:   #fcfffe;
   --sidebar-text:     #8fa89f;
-  --sidebar-active-text: #ffffff;
+  
+  --sidebar-active-text: #30523b;
   --sidebar-width:    185px;
 
   --green-main:       #1e5f4e;
@@ -214,7 +217,9 @@ body {
 }
 .field input[type="text"],
 .field input[type="email"],
-.field input[type="password"] {
+.field input[type="password"],
+.field input[type="date"],
+.field input[type="time"] {
   width: 100%; padding: 10px 14px;
   border: 1.5px solid var(--border-input);
   border-radius: 8px; font-size: 14px;
@@ -267,6 +272,56 @@ body {
 .avatar-upload-btn svg { width: 13px; height: 13px; color: #fff; }
 .avatar-label { font-size: 12px; color: var(--text-muted); }
 #avatarInput { display: none; }
+
+/* ========== DATE AND TIME SECTION ========== */
+.dt-header { display: flex; align-items: center; justify-content: space-between; }
+.dt-toggle {
+  display: flex; background: #f3f4f6;
+  border-radius: 8px; padding: 3px; gap: 2px;
+}
+.dt-toggle-btn {
+  padding: 7px 18px; border: none; background: none;
+  border-radius: 6px; font-size: 12.5px; font-weight: 600;
+  color: var(--text-body); cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: var(--font);
+}
+.dt-toggle-btn.active { background: var(--green-main); color: #fff; }
+.dt-toggle-btn:not(.active):hover { color: var(--text-dark); }
+
+.dt-current-box {
+  background: var(--green-light);
+  border: 1.5px dashed var(--green-main);
+  border-radius: 10px;
+  padding: 36px 20px;
+  text-align: center;
+}
+.dt-current-label {
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.dt-current-value { font-size: 19px; font-weight: 700; color: var(--green-text); line-height: 1.4; }
+
+.dt-hint { font-size: 12.5px; color: var(--text-muted); margin-top: 14px; line-height: 1.5; }
+
+.dt-badge {
+  display: inline-block;
+  background: var(--green-main); color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 14px; border-radius: 6px;
+  margin-bottom: 14px;
+}
+.dt-row { display: flex; gap: 20px; }
+.dt-row .field { flex: 1; }
+.dt-apply-btn {
+  width: 100%; margin-top: 24px;
+  padding: 12px; background: var(--green-main);
+  color: #fff; border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s; font-family: var(--font);
+}
+.dt-apply-btn:hover { background: var(--green-hover); }
 
 /* ========== BOTTOM ACTION BAR ========== */
 .action-bar {

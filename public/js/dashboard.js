@@ -67,6 +67,41 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
+// ---- Manual Schedule Auto-Save (Settings > Date and Time) ----
+function updateModeIndicator(mode) {
+  const el   = document.getElementById('modeIndicator');
+  const text = document.getElementById('modeIndicatorText');
+  if (!el || !text) return;
+  const isManual = mode === 'manual';
+  el.classList.toggle('manual', isManual);
+  text.textContent = isManual ? 'Manual Mode' : 'Automatic Mode';
+}
+
+async function checkScheduledAutoSave() {
+  try {
+    const res  = await fetch('/api/settings/datetime');
+    const data = await res.json();
+    updateModeIndicator(data.mode);
+
+    if (data.mode !== 'manual' || !data.end_date || !data.end_time || data.last_triggered_at) return;
+
+    const endDateTime = new Date(`${data.end_date}T${String(data.end_time).slice(0, 5)}:00`);
+    if (new Date() >= endDateTime) {
+      const saveRes  = await fetch('/api/timerecord/save', { method: 'POST' });
+      const saveData = await saveRes.json();
+      await fetch('/api/settings/datetime/triggered', { method: 'PUT' });
+      if (saveRes.ok) {
+        showToast(`Scheduled save: ${saveData.count} record(s) moved to Time Record.`);
+        loadAttendance();
+      }
+    }
+  } catch {
+    // Fail silently — this is a background check, not a user-initiated action.
+  }
+}
+checkScheduledAutoSave();
+setInterval(checkScheduledAutoSave, 15000); // check every 15 seconds
+
 // ---- Toast Notification ----
 let toastTimer;
 function showToast(msg, type = 'success') {
@@ -104,17 +139,15 @@ function renderTable(records) {
   emptyState.style.display = 'none';
   totalPresent.textContent = records.length.toString().padStart(1, '0');
 
-  records.forEach((rec, idx) => {
+  records.forEach((rec) => {
     const timeIn  = formatTime(rec.time_in);
     const timeOut = formatTime(rec.time_out);
     const dateStr = formatDate(rec.time_in || rec.date);
-    const no = String(idx + 1).padStart(2, '0');
 
     const tr = document.createElement('tr');
     tr.dataset.id = rec.id;
     tr.innerHTML = `
       <td class="row-check"><input type="checkbox" class="row-cb" data-id="${rec.id}"></td>
-      <td class="center row-no">${no}</td>
       <td><span class="id-link">${rec.id_number || '—'}</span></td>
       <td>${rec.last_name || '—'}</td>
       <td>${rec.first_name || '—'}</td>
@@ -174,6 +207,7 @@ document.getElementById('btnNew').addEventListener('click', () => {
   const mm = String(now.getMinutes()).padStart(2, '0');
   const ss = String(now.getSeconds()).padStart(2, '0');
   document.getElementById('f_timein').value = `${hh}:${mm}:${ss}`;
+  document.getElementById('f_timeout').value = '';
   document.getElementById('f_date').value = now.toISOString().slice(0, 10);
   document.getElementById('f_id').value = '';
   document.getElementById('f_last').value = '';
@@ -195,6 +229,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
   const first_name    = document.getElementById('f_first').value.trim();
   const middle_initial= document.getElementById('f_mi').value.trim();
   const time_in       = document.getElementById('f_timein').value;
+  const time_out      = document.getElementById('f_timeout').value;
   const date          = document.getElementById('f_date').value;
 
   if (!id_number || !last_name || !first_name) {
@@ -206,7 +241,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
     const res = await fetch('/api/attendance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, date })
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
     });
     const data = await res.json();
     if (res.ok) {

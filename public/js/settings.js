@@ -11,6 +11,7 @@ let originalData = {};  // for Discard Changes
     const data = await res.json();
     if (!data.loggedIn) { window.location.href = '/'; return; }
     loadProfile();
+    loadDatetimeConfig();
   } catch { window.location.href = '/'; }
 })();
 
@@ -140,6 +141,16 @@ document.getElementById('btnSaveConfig').addEventListener('click', async () => {
       pendingAvatar = null;
     }
 
+    // Save date & time mode (covers switching to Automatic, or re-saving Manual as-is)
+    if (currentDtMode === 'automatic') {
+      await fetch('/api/settings/datetime', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'automatic' })
+      });
+      originalDtData = { mode: 'automatic' };
+    }
+
     // Update original data
     originalData = { first_name, last_name, email, profile_pic: originalData.profile_pic };
 
@@ -161,6 +172,14 @@ document.getElementById('btnDiscard').addEventListener('click', () => {
   document.getElementById('fieldEmail').value     = originalData.email      || '';
   pendingAvatar = null;
   updateAvatarDisplay(originalData.profile_pic, originalData.first_name || 'A');
+
+  // Revert Date and Time section
+  document.getElementById('dtStartDate').value = toDateInputValue(originalDtData.start_date);
+  document.getElementById('dtStartTime').value = toTimeInputValue(originalDtData.start_time);
+  document.getElementById('dtEndDate').value   = toDateInputValue(originalDtData.end_date);
+  document.getElementById('dtEndTime').value   = toTimeInputValue(originalDtData.end_time);
+  setDtMode(originalDtData.mode || 'automatic');
+
   showToast('Changes discarded.');
 });
 
@@ -215,5 +234,108 @@ document.getElementById('pwSave').addEventListener('click', async () => {
   } catch {
     pwError.textContent = 'Server error. Try again.';
     pwError.classList.add('show');
+  }
+});
+
+// ============================================
+//  DATE AND TIME SETTINGS
+// ============================================
+
+let originalDtData = { mode: 'automatic' };
+
+// ---- Helpers: format DB values for <input type="date"/"time"> ----
+function toDateInputValue(val) {
+  if (!val) return '';
+  const str = String(val);
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10); // already plain YYYY-MM-DD
+  const d = new Date(val);
+  if (isNaN(d)) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function toTimeInputValue(val) {
+  if (!val) return '';
+  return String(val).slice(0, 5); // "HH:MM:SS" -> "HH:MM"
+}
+
+// ---- Toggle Automatic / Manual view ----
+function setDtMode(mode) {
+  document.getElementById('dtModeAutomatic').classList.toggle('active', mode === 'automatic');
+  document.getElementById('dtModeManual').classList.toggle('active', mode === 'manual');
+  document.getElementById('dtAutomaticView').style.display = mode === 'automatic' ? 'block' : 'none';
+  document.getElementById('dtManualView').style.display    = mode === 'manual'    ? 'block' : 'none';
+  currentDtMode = mode;
+}
+let currentDtMode = 'automatic';
+
+// ---- Live current time (Automatic view) ----
+function updateDtCurrentTime() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const el = document.getElementById('dtCurrentValue');
+  if (el) el.textContent = `${dateStr} - ${timeStr}`;
+}
+updateDtCurrentTime();
+setInterval(updateDtCurrentTime, 1000);
+
+// ---- Load datetime config ----
+async function loadDatetimeConfig() {
+  try {
+    const res  = await fetch('/api/settings/datetime');
+    const data = await res.json();
+
+    originalDtData = {
+      mode: data.mode || 'automatic',
+      start_date: data.start_date || '',
+      start_time: data.start_time || '',
+      end_date: data.end_date || '',
+      end_time: data.end_time || ''
+    };
+
+    document.getElementById('dtStartDate').value = toDateInputValue(data.start_date);
+    document.getElementById('dtStartTime').value = toTimeInputValue(data.start_time);
+    document.getElementById('dtEndDate').value   = toDateInputValue(data.end_date);
+    document.getElementById('dtEndTime').value   = toTimeInputValue(data.end_time);
+
+    setDtMode(data.mode || 'automatic');
+  } catch {
+    // Silently keep defaults if this fails; Account Information still works.
+  }
+}
+
+// ---- Apply (Manual schedule) ----
+document.getElementById('dtApplyBtn').addEventListener('click', async () => {
+  const start_date = document.getElementById('dtStartDate').value;
+  const start_time = document.getElementById('dtStartTime').value;
+  const end_date    = document.getElementById('dtEndDate').value;
+  const end_time    = document.getElementById('dtEndTime').value;
+
+  if (!start_date || !start_time || !end_date || !end_time) {
+    showToast('Please fill in both Start and End date and time.', 'error');
+    return;
+  }
+  if (new Date(`${end_date}T${end_time}`) <= new Date(`${start_date}T${start_time}`)) {
+    showToast('End date/time must be after Start date/time.', 'error');
+    return;
+  }
+
+  try {
+    const res  = await fetch('/api/settings/datetime', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'manual', start_date, start_time, end_date, end_time })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      originalDtData = { mode: 'manual', start_date, start_time, end_date, end_time };
+      showToast('Schedule applied. Attendance will auto-save to Time Record at the End date and time.');
+    } else {
+      showToast(data.error || 'Failed to apply schedule.', 'error');
+    }
+  } catch {
+    showToast('Server error. Try again.', 'error');
   }
 });

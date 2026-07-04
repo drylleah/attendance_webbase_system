@@ -195,10 +195,10 @@ body {
 .btn svg { width: 14px; height: 14px; }
 .btn-export {
   background: #fff;
-  color: var(--text-dark);
-  border: 1.5px solid var(--border);
+  color: #004D40;
+  border: 1px solid #004D40;
 }
-.btn-export:hover { background: #f9fafb; }
+.btn-export:hover { background: #f0f7f5; }
 .btn-new-entry {
   background: var(--green-main);
   color: #fff;
@@ -262,6 +262,7 @@ body {
 
 .date-range-row { display: flex; align-items: center; gap: 10px; }
 .date-range-label { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+.filter-row { display: flex; align-items: flex-start; gap: 32px; flex-wrap: wrap; }
 .date-input {
   padding: 8px 12px;
   border: 1.5px solid var(--border);
@@ -272,7 +273,9 @@ body {
   outline: none;
   cursor: pointer;
   transition: border-color 0.15s;
+  font-family: var(--font);
 }
+select.date-input { min-width: 150px; }
 .date-input:focus { border-color: var(--green-main); background: #fff; }
 .date-sep { color: var(--text-muted); font-size: 13px; }
 
@@ -314,9 +317,9 @@ tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background: #f8fffe; }
 tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; }
 
-.td-no { color: var(--text-muted); font-size: 12px; font-weight: 500; }
 .td-id { color: var(--green-main); font-weight: 700; font-size: 13px; cursor: pointer; }
 .td-id:hover { text-decoration: underline; }
+.col-fullname { display: none; }
 
 .time-in-block .t  { font-size: 14px; font-weight: 700; color: var(--green-main); line-height: 1.1; }
 .time-in-block .ap { font-size: 11px; color: var(--green-main); font-weight: 600; }
@@ -426,7 +429,11 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
 .toast.success { background: var(--green-main); }
 .toast.error   { background: #dc2626; }
 
-/* ========== PRINT (Export PDF) ========== */
+/* ========== PRINT (Preview Time Records) ========== */
+@page {
+  size: landscape;
+  margin: 12mm;
+}
 @media print {
   /* Hide everything not part of the data */
   .sidebar,
@@ -438,6 +445,16 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
   .modal-overlay,
   .toast {
     display: none !important;
+  }
+
+  /* Hide split name columns; show the combined Full Name column instead */
+  .col-last,
+  .col-first,
+  .col-mi {
+    display: none !important;
+  }
+  .col-fullname {
+    display: table-cell !important;
   }
 
   /* Reset layout wrappers so only the table flows on the page */
