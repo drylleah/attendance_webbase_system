@@ -1,5 +1,6 @@
 /**
- * seed.js — Run ONCE to set up all tables and admin account.
+ * seed.js — Run to set up all tables, columns, and admin account.
+ * Safe to run multiple times.
  * Command: node seed.js
  */
 const bcrypt = require('bcryptjs');
@@ -8,11 +9,22 @@ const mysql  = require('mysql2/promise');
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'Att@2024#Xz9!';
 
+async function addColumnIfMissing(db, table, column, definition) {
+  try {
+    await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`  + Added column: ${column}`);
+  } catch (err) {
+    if (err.code === 'ER_DUP_FIELDNAME') { /* already exists, skip */ }
+    else throw err;
+  }
+}
+
 async function seed() {
   const db = await mysql.createConnection({
     host: 'localhost', user: 'root', password: '', database: 'attendance_db'
   });
   try {
+    // ---- Tables ----
     await db.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,15 +60,30 @@ async function seed() {
         saved_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('✅ All tables ready (users, attendance, time_records).');
+    console.log('✅ Core tables ready.');
 
+    // ---- Add profile columns to users if missing ----
+    await addColumnIfMissing(db, 'users', 'first_name',  'VARCHAR(100) DEFAULT NULL');
+    await addColumnIfMissing(db, 'users', 'last_name',   'VARCHAR(100) DEFAULT NULL');
+    await addColumnIfMissing(db, 'users', 'email',       'VARCHAR(255) DEFAULT NULL');
+    await addColumnIfMissing(db, 'users', 'profile_pic', 'MEDIUMTEXT DEFAULT NULL');
+    console.log('✅ Profile columns ready.');
+
+    // ---- Seed admin ----
     const [existing] = await db.execute('SELECT id FROM users WHERE username = ?', [ADMIN_USERNAME]);
     if (existing.length > 0) {
-      console.log('⚠️  Admin already exists. Skipping.');
+      // Update default email if not set
+      await db.execute(
+        'UPDATE users SET email = ? WHERE username = ? AND (email IS NULL OR email = "")',
+        ['admin@lorma.edu', ADMIN_USERNAME]
+      );
+      console.log('⚠️  Admin already exists. Skipping creation.');
     } else {
       const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
-      await db.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-        [ADMIN_USERNAME, hashed, 'admin']);
+      await db.execute(
+        'INSERT INTO users (username, password, role, email) VALUES (?, ?, ?, ?)',
+        [ADMIN_USERNAME, hashed, 'admin', 'admin@lorma.edu']
+      );
       console.log('✅ Admin account created!');
       console.log('   Username:', ADMIN_USERNAME);
       console.log('   Password:', ADMIN_PASSWORD);

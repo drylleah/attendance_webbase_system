@@ -3,12 +3,16 @@
    ============================================ */
 
 :root {
-  --sidebar-bg:       #161c1a;
-  --sidebar-active:   #1e2a27;
-  --sidebar-hover:    #1a2420;
-  --sidebar-border:   #2a3530;
+  --sidebar-bg:       #fdfffe;
+  
+  --sidebar-active:   #cff7e6;
+  --sidebar-hover:    #cff7e6;
+
+  --sidebar-border:   #fcfffe;
   --sidebar-text:     #8fa89f;
-  --sidebar-active-text: #ffffff;
+  
+  --sidebar-active-text: #30523b;
+
   --sidebar-width:    185px;
 
   --green-dark:       #1a4d3e;

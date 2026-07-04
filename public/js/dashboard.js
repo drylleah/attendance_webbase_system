@@ -27,11 +27,24 @@ const modalOverlay   = document.getElementById('modalOverlay');
       window.location.href = '/';
       return;
     }
-    // Set user info
-    const name = data.username || 'Admin';
-    welcomeName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-    userDisplayName.textContent = name.charAt(0).toUpperCase() + name.slice(1) + ' User';
-    userAvatar.textContent = name.charAt(0).toUpperCase();
+    // Load first name from profile
+    try {
+      const profileRes  = await fetch('/api/settings/profile');
+      const profileData = await profileRes.json();
+      const firstName   = profileData.first_name || data.username || 'Admin';
+      welcomeName.textContent     = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+      userDisplayName.textContent = firstName.charAt(0).toUpperCase() + firstName.slice(1) + ' User';
+      userAvatar.textContent      = firstName.charAt(0).toUpperCase();
+      // Show profile pic if set
+      if (profileData.profile_pic) {
+        userAvatar.innerHTML = `<img src="${profileData.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      }
+    } catch {
+      const name = data.username || 'Admin';
+      welcomeName.textContent     = name.charAt(0).toUpperCase() + name.slice(1);
+      userDisplayName.textContent = name.charAt(0).toUpperCase() + name.slice(1) + ' User';
+      userAvatar.textContent      = name.charAt(0).toUpperCase();
+    }
   } catch {
     window.location.href = '/';
   }
@@ -161,7 +174,6 @@ document.getElementById('btnNew').addEventListener('click', () => {
   const mm = String(now.getMinutes()).padStart(2, '0');
   const ss = String(now.getSeconds()).padStart(2, '0');
   document.getElementById('f_timein').value = `${hh}:${mm}:${ss}`;
-  document.getElementById('f_timeout').value = '';
   document.getElementById('f_date').value = now.toISOString().slice(0, 10);
   document.getElementById('f_id').value = '';
   document.getElementById('f_last').value = '';
@@ -183,7 +195,6 @@ document.getElementById('modalSave').addEventListener('click', async () => {
   const first_name    = document.getElementById('f_first').value.trim();
   const middle_initial= document.getElementById('f_mi').value.trim();
   const time_in       = document.getElementById('f_timein').value;
-  const time_out      = document.getElementById('f_timeout').value;
   const date          = document.getElementById('f_date').value;
 
   if (!id_number || !last_name || !first_name) {
@@ -195,7 +206,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
     const res = await fetch('/api/attendance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, date })
     });
     const data = await res.json();
     if (res.ok) {
