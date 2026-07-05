@@ -15,6 +15,15 @@ let originalData = {};  // for Discard Changes
   } catch { window.location.href = '/'; }
 })();
 
+// ---- Open tab based on ?tab= query param (e.g. from Profile icon links) ----
+(function openTabFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  if (tab === 'account' || tab === 'datetime') {
+    switchTab(tab);
+  }
+})();
+
 // ---- Logout ----
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });

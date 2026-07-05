@@ -24,11 +24,30 @@ let currentMonth  = '';
     const res  = await fetch('/api/auth/me');
     const data = await res.json();
     if (!data.loggedIn) { window.location.href = '/'; return; }
-    const name = data.username || 'Admin';
-    document.getElementById('userDisplayName').textContent =
-      name.charAt(0).toUpperCase() + name.slice(1) + ' User';
-    document.getElementById('userAvatar').textContent =
-      name.charAt(0).toUpperCase();
+
+    const userAvatar   = document.getElementById('userAvatar');
+    const topbarAvatar = document.getElementById('topbarAvatar');
+
+    try {
+      const profileRes  = await fetch('/api/settings/profile');
+      const profileData = await profileRes.json();
+      const firstName   = profileData.first_name || data.username || 'Admin';
+      document.getElementById('userDisplayName').textContent =
+        firstName.charAt(0).toUpperCase() + firstName.slice(1) + ' User';
+      userAvatar.textContent   = firstName.charAt(0).toUpperCase();
+      topbarAvatar.textContent = firstName.charAt(0).toUpperCase();
+      if (profileData.profile_pic) {
+        const avatarImg = `<img src="${profileData.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        userAvatar.innerHTML   = avatarImg;
+        topbarAvatar.innerHTML = avatarImg;
+      }
+    } catch {
+      const name = data.username || 'Admin';
+      document.getElementById('userDisplayName').textContent =
+        name.charAt(0).toUpperCase() + name.slice(1) + ' User';
+      userAvatar.textContent   = name.charAt(0).toUpperCase();
+      topbarAvatar.textContent = name.charAt(0).toUpperCase();
+    }
   } catch { window.location.href = '/'; }
 })();
 

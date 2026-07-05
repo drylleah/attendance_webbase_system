@@ -8,6 +8,7 @@ const welcomeName    = document.getElementById('welcomeName');
 const userDisplayName= document.getElementById('userDisplayName');
 const userEmail      = document.getElementById('userEmail');
 const userAvatar     = document.getElementById('userAvatar');
+const topbarAvatar   = document.getElementById('topbarAvatar');
 const liveDate       = document.getElementById('liveDate');
 const liveTime       = document.getElementById('liveTime');
 const totalPresent   = document.getElementById('totalPresent');
@@ -35,15 +36,19 @@ const modalOverlay   = document.getElementById('modalOverlay');
       welcomeName.textContent     = firstName.charAt(0).toUpperCase() + firstName.slice(1);
       userDisplayName.textContent = firstName.charAt(0).toUpperCase() + firstName.slice(1) + ' User';
       userAvatar.textContent      = firstName.charAt(0).toUpperCase();
+      topbarAvatar.textContent    = firstName.charAt(0).toUpperCase();
       // Show profile pic if set
       if (profileData.profile_pic) {
-        userAvatar.innerHTML = `<img src="${profileData.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        const avatarImg = `<img src="${profileData.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        userAvatar.innerHTML   = avatarImg;
+        topbarAvatar.innerHTML = avatarImg;
       }
     } catch {
       const name = data.username || 'Admin';
       welcomeName.textContent     = name.charAt(0).toUpperCase() + name.slice(1);
       userDisplayName.textContent = name.charAt(0).toUpperCase() + name.slice(1) + ' User';
       userAvatar.textContent      = name.charAt(0).toUpperCase();
+      topbarAvatar.textContent    = name.charAt(0).toUpperCase();
     }
   } catch {
     window.location.href = '/';
