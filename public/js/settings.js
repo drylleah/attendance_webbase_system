@@ -48,9 +48,13 @@ function switchTab(tab) {
   if (tab === 'account') {
     document.getElementById('menuAccountInfo').classList.add('active');
     document.getElementById('sectionAccount').classList.add('active');
-  } else {
+  } else if (tab === 'datetime') {
     document.getElementById('menuDateTime').classList.add('active');
     document.getElementById('sectionDateTime').classList.add('active');
+  } else if (tab === 'activitylogs') {
+    document.getElementById('menuActivityLogs').classList.add('active');
+    document.getElementById('sectionActivityLogs').classList.add('active');
+    loadActivityLogs();
   }
 }
 
@@ -348,3 +352,266 @@ document.getElementById('dtApplyBtn').addEventListener('click', async () => {
     showToast('Server error. Try again.', 'error');
   }
 });
+
+
+// ============================================
+//  ACTIVITY LOGS
+// ============================================
+
+const AL_LIMIT = 15;
+let alPage     = 1;
+let alTotal    = 0;
+let alSearch   = '';
+let alAction   = '';
+let alFrom     = '';
+let alTo       = '';
+
+// Action label map — converts DB action codes to friendly display text
+const ACTION_LABELS = {
+  LOGIN:                  { label: 'Login',                color: 'al-tag-info'    },
+  LOGOUT:                 { label: 'Logout',               color: 'al-tag-muted'   },
+  ADD_ATTENDANCE:         { label: 'Add Attendance',        color: 'al-tag-success' },
+  EDIT_ATTENDANCE:        { label: 'Edit Attendance',       color: 'al-tag-warning' },
+  DELETE_ATTENDANCE:      { label: 'Delete Attendance',     color: 'al-tag-danger'  },
+  CLEAR_ATTENDANCE:       { label: 'Clear Attendance',      color: 'al-tag-danger'  },
+  ADD_TIME_RECORD:        { label: 'Add Time Record',       color: 'al-tag-success' },
+  EDIT_TIME_RECORD:       { label: 'Edit Time Record',      color: 'al-tag-warning' },
+  SAVE_TO_TIME_RECORDS:   { label: 'Save to Time Records',  color: 'al-tag-success' },
+  UPDATE_PROFILE:         { label: 'Update Profile',        color: 'al-tag-info'    },
+  UPDATE_AVATAR:          { label: 'Update Avatar',         color: 'al-tag-info'    },
+  CHANGE_PASSWORD:        { label: 'Change Password',       color: 'al-tag-warning' },
+  UPDATE_DATETIME_CONFIG: { label: 'Date/Time Config',      color: 'al-tag-info'    },
+  CLEAR_ACTIVITY_LOGS:    { label: 'Clear Logs',            color: 'al-tag-danger'  },
+};
+
+function alFormatDateTime(dt) {
+  if (!dt) return '—';
+  const d = new Date(dt);
+  if (isNaN(d)) return dt;
+  return d.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+  });
+}
+
+function alActionTag(action) {
+  const info = ACTION_LABELS[action] || { label: action, color: 'al-tag-muted' };
+  return `<span class="al-tag ${info.color}">${info.label}</span>`;
+}
+
+// ---- Render logs table ----
+function renderActivityLogs(logs) {
+  const tbody      = document.getElementById('alTableBody');
+  const emptyEl    = document.getElementById('alEmpty');
+  const totalLabel = document.getElementById('alTotalLabel');
+
+  tbody.innerHTML = '';
+  totalLabel.textContent = `${alTotal.toLocaleString()} total log entr${alTotal === 1 ? 'y' : 'ies'}`;
+
+  if (!logs || logs.length === 0) {
+    emptyEl.style.display = 'flex';
+    renderAlPagination();
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  const offset = (alPage - 1) * AL_LIMIT;
+  logs.forEach((log, i) => {
+    const tr = document.createElement('tr');
+    tr.classList.add('al-log-row');
+    tr.title = 'Click to view details';
+    tr.dataset.log = JSON.stringify(log);
+    tr.innerHTML = `
+      <td class="al-num">${offset + i + 1}</td>
+      <td>
+        <div class="al-user-cell">
+          <span class="al-avatar">${(log.username || '?').charAt(0).toUpperCase()}</span>
+          <span class="al-username">${log.username || '—'}</span>
+        </div>
+      </td>
+      <td>${alActionTag(log.action)}</td>
+      <td><span class="al-target">${log.target || '—'}</span></td>
+      <td class="al-desc">${log.description || '—'}</td>
+      <td class="al-ip">${log.ip_address || '—'}</td>
+      <td class="al-dt">${alFormatDateTime(log.created_at)}</td>
+    `;
+    tr.addEventListener('click', () => openLogDetail(log));
+    tbody.appendChild(tr);
+  });
+
+  renderAlPagination();
+}
+
+// ---- Pagination ----
+function renderAlPagination() {
+  const container = document.getElementById('alPagination');
+  container.innerHTML = '';
+  const totalPages = Math.ceil(alTotal / AL_LIMIT);
+  if (totalPages <= 1) return;
+
+  const mkBtn = (label, page, disabled, active) => {
+    const btn = document.createElement('button');
+    btn.className = `al-page-btn${active ? ' active' : ''}`;
+    btn.textContent = label;
+    btn.disabled = disabled;
+    btn.addEventListener('click', () => { alPage = page; loadActivityLogs(); });
+    return btn;
+  };
+
+  container.appendChild(mkBtn('‹ Prev', alPage - 1, alPage === 1, false));
+
+  // Window of up to 5 page numbers
+  const start = Math.max(1, alPage - 2);
+  const end   = Math.min(totalPages, start + 4);
+  for (let p = start; p <= end; p++) {
+    container.appendChild(mkBtn(p, p, false, p === alPage));
+  }
+
+  container.appendChild(mkBtn('Next ›', alPage + 1, alPage === totalPages, false));
+
+  const info = document.createElement('span');
+  info.className = 'al-page-info';
+  info.textContent = `Page ${alPage} of ${totalPages}`;
+  container.appendChild(info);
+}
+
+// ---- Fetch logs from API ----
+async function loadActivityLogs() {
+  try {
+    const params = new URLSearchParams({
+      search: alSearch,
+      action: alAction,
+      from:   alFrom,
+      to:     alTo,
+      page:   alPage,
+      limit:  AL_LIMIT
+    });
+    const res  = await fetch(`/api/settings/activity-logs?${params}`);
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Failed to load logs.', 'error'); return; }
+    alTotal = data.total || 0;
+    renderActivityLogs(data.logs || []);
+  } catch {
+    showToast('Failed to load activity logs.', 'error');
+  }
+}
+
+// ---- Filters ----
+let alSearchTimer;
+document.getElementById('alSearch').addEventListener('input', (e) => {
+  clearTimeout(alSearchTimer);
+  alSearchTimer = setTimeout(() => {
+    alSearch = e.target.value.trim();
+    alPage   = 1;
+    loadActivityLogs();
+  }, 300);
+});
+
+document.getElementById('alActionFilter').addEventListener('change', (e) => {
+  alAction = e.target.value;
+  alPage   = 1;
+  loadActivityLogs();
+});
+
+document.getElementById('alDateFrom').addEventListener('change', (e) => {
+  alFrom = e.target.value;
+  alPage = 1;
+  loadActivityLogs();
+});
+
+document.getElementById('alDateTo').addEventListener('change', (e) => {
+  alTo   = e.target.value;
+  alPage = 1;
+  loadActivityLogs();
+});
+
+document.getElementById('alRefresh').addEventListener('click', () => {
+  alPage = 1;
+  loadActivityLogs();
+  showToast('Activity logs refreshed.');
+});
+
+// ---- Clear Logs ----
+document.getElementById('alClearBtn').addEventListener('click', async () => {
+  if (!confirm('Clear ALL activity logs? This cannot be undone.')) return;
+  try {
+    const res  = await fetch('/api/settings/activity-logs', { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      alPage = 1;
+      loadActivityLogs();
+      showToast('All activity logs cleared.');
+    } else {
+      showToast(data.error || 'Failed to clear logs.', 'error');
+    }
+  } catch {
+    showToast('Server error.', 'error');
+  }
+});
+
+// ---- Log Detail Modal ----
+// Create modal element once and reuse
+const alDetailModal = document.createElement('div');
+alDetailModal.className = 'modal-overlay al-detail-overlay';
+alDetailModal.id = 'alDetailModal';
+alDetailModal.innerHTML = `
+  <div class="modal al-detail-modal">
+    <div class="al-detail-header">
+      <div class="al-detail-title">Log Entry Detail</div>
+      <button class="al-detail-close" id="alDetailClose">&times;</button>
+    </div>
+    <div class="al-detail-body" id="alDetailBody"></div>
+  </div>
+`;
+document.body.appendChild(alDetailModal);
+
+document.getElementById('alDetailClose').addEventListener('click', () => {
+  alDetailModal.classList.remove('show');
+});
+alDetailModal.addEventListener('click', (e) => {
+  if (e.target === alDetailModal) alDetailModal.classList.remove('show');
+});
+
+function openLogDetail(log) {
+  const info  = ACTION_LABELS[log.action] || { label: log.action, color: 'al-tag-muted' };
+  const body  = document.getElementById('alDetailBody');
+
+  body.innerHTML = `
+    <div class="al-detail-grid">
+      <div class="al-detail-row">
+        <span class="al-detail-key">User</span>
+        <span class="al-detail-val">
+          <span class="al-avatar" style="width:26px;height:26px;font-size:11px;margin-right:8px;">
+            ${(log.username || '?').charAt(0).toUpperCase()}
+          </span>
+          ${log.username || '—'}
+        </span>
+      </div>
+      <div class="al-detail-row">
+        <span class="al-detail-key">Action</span>
+        <span class="al-detail-val"><span class="al-tag ${info.color}">${info.label}</span></span>
+      </div>
+      <div class="al-detail-row">
+        <span class="al-detail-key">Target Table</span>
+        <span class="al-detail-val al-mono">${log.target || '—'}</span>
+      </div>
+      <div class="al-detail-row al-detail-row--full">
+        <span class="al-detail-key">Description</span>
+        <span class="al-detail-val al-detail-desc">${log.description || '—'}</span>
+      </div>
+      <div class="al-detail-row">
+        <span class="al-detail-key">IP Address</span>
+        <span class="al-detail-val al-mono">${log.ip_address || '—'}</span>
+      </div>
+      <div class="al-detail-row">
+        <span class="al-detail-key">Date &amp; Time</span>
+        <span class="al-detail-val">${alFormatDateTime(log.created_at)}</span>
+      </div>
+      <div class="al-detail-row">
+        <span class="al-detail-key">Log ID</span>
+        <span class="al-detail-val al-mono">#${log.id}</span>
+      </div>
+    </div>
+  `;
+  alDetailModal.classList.add('show');
+}

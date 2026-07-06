@@ -1,6 +1,7 @@
 const express          = require('express');
 const session          = require('express-session');
 const path             = require('path');
+const db               = require('./src/db');
 const authRoutes       = require('./src/routes/auth');
 const attendanceRoutes = require('./src/routes/attendance');
 const timerecordRoutes = require('./src/routes/timerecord');
@@ -8,6 +9,30 @@ const settingsRoutes   = require('./src/routes/settings');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+
+// ---- Ensure activity_logs table exists (safe to run every startup) ----
+async function ensureTables() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        user_id     INT,
+        username    VARCHAR(100),
+        action      VARCHAR(100) NOT NULL,
+        target      VARCHAR(100),
+        description TEXT,
+        ip_address  VARCHAR(45),
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_created_at (created_at),
+        INDEX idx_user_id    (user_id)
+      )
+    `);
+    console.log('✅ activity_logs table ready.');
+  } catch (err) {
+    console.error('❌ Failed to ensure activity_logs table:', err.message);
+  }
+}
+ensureTables();
 
 app.use(express.json({ limit: '5mb' })); // allow base64 image uploads
 app.use(express.urlencoded({ extended: true }));

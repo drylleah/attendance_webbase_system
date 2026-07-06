@@ -102,6 +102,7 @@ function renderTable(records, total) {
       : '';
 
     const tr = document.createElement('tr');
+    tr.dataset.record = JSON.stringify(rec);
     tr.innerHTML = `
       <td class="td-id">${rec.id_number || '—'}</td>
       <td class="col-last">${rec.last_name  || '—'}</td>
@@ -115,10 +116,93 @@ function renderTable(records, total) {
         ? `<div class="time-out-block"><div class="t">${toTime}</div><div class="ap">${toAmPm}</div></div>`
         : '<span class="time-empty">--:--</span>'}</td>
       <td class="td-date">${dateStr}</td>
+      <td>
+        <button class="btn-edit-row" title="Edit record">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+        </button>
+      </td>
     `;
+
+    // Edit button
+    tr.querySelector('.btn-edit-row').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditModal(rec);
+    });
+
     recordsBody.appendChild(tr);
   });
 }
+
+// ---- Edit Modal ----
+const editModalOverlay = document.getElementById('editModalOverlay');
+let editingId = null;
+
+function toTimeInput(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  if (isNaN(d)) return '';
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+function toDateInput(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  if (isNaN(d)) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+function openEditModal(rec) {
+  editingId = rec.id;
+  document.getElementById('ef_id').value      = rec.id_number      || '';
+  document.getElementById('ef_last').value    = rec.last_name      || '';
+  document.getElementById('ef_first').value   = rec.first_name     || '';
+  document.getElementById('ef_mi').value      = rec.middle_initial || '';
+  document.getElementById('ef_timein').value  = toTimeInput(rec.time_in);
+  document.getElementById('ef_timeout').value = toTimeInput(rec.time_out);
+  document.getElementById('ef_date').value    = toDateInput(rec.time_in || rec.date);
+  editModalOverlay.classList.add('show');
+}
+
+document.getElementById('editModalCancel').addEventListener('click', () => {
+  editModalOverlay.classList.remove('show');
+  editingId = null;
+});
+editModalOverlay.addEventListener('click', (e) => {
+  if (e.target === editModalOverlay) { editModalOverlay.classList.remove('show'); editingId = null; }
+});
+
+document.getElementById('editModalSave').addEventListener('click', async () => {
+  if (!editingId) return;
+  const id_number      = document.getElementById('ef_id').value.trim();
+  const last_name      = document.getElementById('ef_last').value.trim();
+  const first_name     = document.getElementById('ef_first').value.trim();
+  const middle_initial = document.getElementById('ef_mi').value.trim();
+  const time_in        = document.getElementById('ef_timein').value;
+  const time_out       = document.getElementById('ef_timeout').value;
+  const date           = document.getElementById('ef_date').value;
+
+  if (!id_number || !last_name || !first_name) {
+    showToast('ID Number, Last Name, and First Name are required.', 'error');
+    return;
+  }
+  try {
+    const res  = await fetch(`/api/timerecord/${editingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      editModalOverlay.classList.remove('show');
+      editingId = null;
+      showToast('Record updated successfully.');
+      loadRecords();
+    } else {
+      showToast(data.error || 'Failed to update record.', 'error');
+    }
+  } catch {
+    showToast('Server error. Try again.', 'error');
+  }
+});
 
 
 

@@ -597,3 +597,20 @@ input[type="checkbox"] {
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.success { background: var(--green-main); }
 .toast.error   { background: #dc2626; }
+
+/* ---- Edit row button ---- */
+.btn-edit-row {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1.5px solid #d1d5db;
+  background: #fff; color: #9ca3af;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-edit-row:hover {
+  background: var(--green-light);
+  color: var(--green-main);
+  border-color: var(--green-main);
+}
+
+/* Clickable row cursor */
+tr.clickable-row { cursor: default; }

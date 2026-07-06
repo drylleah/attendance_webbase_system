@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
+const { logActivity } = require('../logger');
 
 const router = express.Router();
 
@@ -33,6 +34,8 @@ router.post('/login', async (req, res) => {
     req.session.username = user.username;
     req.session.role = user.role;
 
+    await logActivity(req, 'LOGIN', 'users', `User "${user.username}" logged in`);
+
     res.json({
       message: 'Login successful.',
       user: { username: user.username, role: user.role }
@@ -45,7 +48,14 @@ router.post('/login', async (req, res) => {
 
 // ---- Logout ----
 router.post('/logout', (req, res) => {
-  req.session.destroy(() => {
+  const username = req.session?.username || 'unknown';
+  const userId   = req.session?.userId   || null;
+  req.session.destroy(async () => {
+    // Build a minimal req-like object since session is gone
+    await logActivity(
+      { session: { userId, username }, headers: req.headers, socket: req.socket },
+      'LOGOUT', 'users', `User "${username}" logged out`
+    );
     res.json({ message: 'Logged out successfully.' });
   });
 });

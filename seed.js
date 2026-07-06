@@ -74,6 +74,22 @@ async function seed() {
     `);
     // Ensure a single config row always exists
     await db.execute(`INSERT IGNORE INTO datetime_config (id, mode) VALUES (1, 'automatic')`);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        user_id     INT,
+        username    VARCHAR(100),
+        action      VARCHAR(100) NOT NULL,
+        target      VARCHAR(100),
+        description TEXT,
+        ip_address  VARCHAR(45),
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_created_at (created_at),
+        INDEX idx_user_id    (user_id)
+      )
+    `);
+
     console.log('✅ Core tables ready.');
 
     // ---- Add profile columns to users if missing ----

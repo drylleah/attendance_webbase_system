@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt  = require('bcryptjs');
 const db      = require('../db');
+const { logActivity } = require('../logger');
 const router  = express.Router();
 
 function requireLogin(req, res, next) {
@@ -32,6 +33,8 @@ router.put('/profile', requireLogin, async (req, res) => {
     );
     // Update session username display if first_name changed
     if (first_name) req.session.firstName = first_name;
+    await logActivity(req, 'UPDATE_PROFILE', 'users',
+      `Updated profile — name: "${first_name || ''} ${last_name || ''}".trim(), email: "${email || ''}"`);
     res.json({ message: 'Profile updated successfully.' });
   } catch (err) {
     console.error('PUT profile error:', err);
@@ -47,6 +50,7 @@ router.put('/avatar', requireLogin, async (req, res) => {
       'UPDATE users SET profile_pic = ? WHERE id = ?',
       [profile_pic || null, req.session.userId]
     );
+    await logActivity(req, 'UPDATE_AVATAR', 'users', 'Updated profile picture');
     res.json({ message: 'Profile picture updated.' });
   } catch (err) {
     console.error('PUT avatar error:', err);
@@ -73,6 +77,7 @@ router.put('/password', requireLogin, async (req, res) => {
     }
     const hashed = await bcrypt.hash(new_password, 10);
     await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.session.userId]);
+    await logActivity(req, 'CHANGE_PASSWORD', 'users', 'Changed account password');
     res.json({ message: 'Password changed successfully.' });
   } catch (err) {
     console.error('PUT password error:', err);
@@ -80,6 +85,58 @@ router.put('/password', requireLogin, async (req, res) => {
   }
 });
 
+// ---- GET activity logs (with search, action filter, date range, pagination) ----
+router.get('/activity-logs', requireLogin, async (req, res) => {
+  const { search, action, from, to, page = 1, limit = 20 } = req.query;
+  const offset = (parseInt(page) - 1) * parseInt(limit);
+
+  const conditions = [];
+  const params     = [];
+
+  if (search) {
+    conditions.push('(username LIKE ? OR description LIKE ? OR ip_address LIKE ?)');
+    const like = `%${search}%`;
+    params.push(like, like, like);
+  }
+  if (action) {
+    conditions.push('action = ?');
+    params.push(action);
+  }
+  if (from) { conditions.push('DATE(created_at) >= ?'); params.push(from); }
+  if (to)   { conditions.push('DATE(created_at) <= ?'); params.push(to);   }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  try {
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM activity_logs ${where}`, params
+    );
+    const [logs] = await db.query(
+      `SELECT id, user_id, username, action, target, description, ip_address, created_at
+       FROM activity_logs ${where}
+       ORDER BY created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, parseInt(limit), offset]
+    );
+    res.json({ logs, total, page: parseInt(page), limit: parseInt(limit) });
+  } catch (err) {
+    console.error('GET activity-logs error:', err);
+    res.status(500).json({ error: 'Failed to fetch activity logs.' });
+  }
+});
+
+// ---- DELETE activity logs (clear all — admin only) ----
+router.delete('/activity-logs', requireLogin, async (req, res) => {
+  try {
+    await db.query('DELETE FROM activity_logs');
+    // Log the clear action itself after clearing (fresh entry)
+    await logActivity(req, 'CLEAR_ACTIVITY_LOGS', 'activity_logs', 'Cleared all activity logs');
+    res.json({ message: 'Activity logs cleared.' });
+  } catch (err) {
+    console.error('DELETE activity-logs error:', err);
+    res.status(500).json({ error: 'Failed to clear logs.' });
+  }
+});
 // ---- GET datetime config ----
 router.get('/datetime', requireLogin, async (req, res) => {
   try {
@@ -118,6 +175,10 @@ router.put('/datetime', requireLogin, async (req, res) => {
        WHERE id = 1`,
       [mode, start_date || null, start_time || null, end_date || null, end_time || null]
     );
+    const dtDesc = mode === 'manual'
+      ? `Set Date/Time to Manual mode — start: ${start_date} ${start_time}, end: ${end_date} ${end_time}`
+      : 'Set Date/Time to Automatic mode';
+    await logActivity(req, 'UPDATE_DATETIME_CONFIG', 'datetime_config', dtDesc);
     res.json({ message: 'Date and Time settings saved.' });
   } catch (err) {
     console.error('PUT datetime config error:', err);

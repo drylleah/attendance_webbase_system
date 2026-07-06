@@ -151,6 +151,8 @@ function renderTable(records) {
 
     const tr = document.createElement('tr');
     tr.dataset.id = rec.id;
+    tr.classList.add('clickable-row');
+    tr.title = 'Click to edit this record';
     tr.innerHTML = `
       <td class="row-check"><input type="checkbox" class="row-cb" data-id="${rec.id}"></td>
       <td><span class="id-link">${rec.id_number || '—'}</span></td>
@@ -168,13 +170,103 @@ function renderTable(records) {
           : '<span class="time-empty">- : - -</span>'}
       </td>
       <td>${dateStr}</td>
+      <td>
+        <button class="btn-edit-row" data-id="${rec.id}" title="Edit record">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+        </button>
+      </td>
     `;
+
+    // Store raw record data on the row for the edit modal
+    tr.dataset.record = JSON.stringify(rec);
     attendanceBody.appendChild(tr);
   });
 
   // Sync select-all
   selectAll.checked = false;
+
+  // Attach edit button listeners
+  document.querySelectorAll('.btn-edit-row').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // don't trigger row click
+      const id  = btn.dataset.id;
+      const row = attendanceBody.querySelector(`tr[data-id="${id}"]`);
+      const rec = JSON.parse(row.dataset.record);
+      openEditModal(rec);
+    });
+  });
 }
+
+// ---- Edit Modal ----
+const editModalOverlay = document.getElementById('editModalOverlay');
+let editingId = null;
+
+function toTimeInput(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  if (isNaN(d)) return '';
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+function toDateInput(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  if (isNaN(d)) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+function openEditModal(rec) {
+  editingId = rec.id;
+  document.getElementById('ef_id').value      = rec.id_number      || '';
+  document.getElementById('ef_last').value    = rec.last_name      || '';
+  document.getElementById('ef_first').value   = rec.first_name     || '';
+  document.getElementById('ef_mi').value      = rec.middle_initial || '';
+  document.getElementById('ef_timein').value  = toTimeInput(rec.time_in);
+  document.getElementById('ef_timeout').value = toTimeInput(rec.time_out);
+  document.getElementById('ef_date').value    = toDateInput(rec.time_in || rec.date);
+  editModalOverlay.classList.add('show');
+}
+
+document.getElementById('editModalCancel').addEventListener('click', () => {
+  editModalOverlay.classList.remove('show');
+  editingId = null;
+});
+editModalOverlay.addEventListener('click', (e) => {
+  if (e.target === editModalOverlay) { editModalOverlay.classList.remove('show'); editingId = null; }
+});
+
+document.getElementById('editModalSave').addEventListener('click', async () => {
+  if (!editingId) return;
+  const id_number      = document.getElementById('ef_id').value.trim();
+  const last_name      = document.getElementById('ef_last').value.trim();
+  const first_name     = document.getElementById('ef_first').value.trim();
+  const middle_initial = document.getElementById('ef_mi').value.trim();
+  const time_in        = document.getElementById('ef_timein').value;
+  const time_out       = document.getElementById('ef_timeout').value;
+  const date           = document.getElementById('ef_date').value;
+
+  if (!id_number || !last_name || !first_name) {
+    showToast('ID Number, Last Name, and First Name are required.', 'error');
+    return;
+  }
+  try {
+    const res  = await fetch(`/api/attendance/${editingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      editModalOverlay.classList.remove('show');
+      editingId = null;
+      showToast('Record updated successfully.');
+      loadAttendance(searchInput.value.trim());
+    } else {
+      showToast(data.error || 'Failed to update record.', 'error');
+    }
+  } catch {
+    showToast('Server error. Please try again.', 'error');
+  }
+});
 
 // ---- Fetch Attendance ----
 async function loadAttendance(query = '') {
