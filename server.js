@@ -7,6 +7,7 @@ const attendanceRoutes = require('./src/routes/attendance');
 const timerecordRoutes = require('./src/routes/timerecord');
 const settingsRoutes   = require('./src/routes/settings');
 const incidentsRoutes  = require('./src/routes/incidents');
+const rfidRoutes       = require('./src/routes/rfid');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/timerecord', timerecordRoutes);
 app.use('/api/settings',   settingsRoutes);
 app.use('/api/incidents',  incidentsRoutes);
+app.use('/api/rfid',       rfidRoutes);
 
 // ---- Ensure required tables exist, then start server ----
 async function ensureTables() {

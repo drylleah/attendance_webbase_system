@@ -92,6 +92,19 @@ async function seed() {
     `);
 
     await db.execute(`
+      CREATE TABLE IF NOT EXISTS rfid_cards (
+        id             INT AUTO_INCREMENT PRIMARY KEY,
+        id_number      VARCHAR(50)  UNIQUE NOT NULL COMMENT 'School ID — this is the RFID identifier',
+        last_name      VARCHAR(100) NOT NULL,
+        first_name     VARCHAR(100) NOT NULL,
+        middle_initial VARCHAR(5),
+        is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+        registered_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_id_number (id_number)
+      )
+    `);
+
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS incident_reports (
         id              INT AUTO_INCREMENT PRIMARY KEY,
         reported_by     INT,
