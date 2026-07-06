@@ -125,6 +125,24 @@ router.put('/:id', requireLogin, async (req, res) => {
   }
 });
 
+// ---- DELETE a single time record by ID ----
+router.delete('/:id', requireLogin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await db.query('SELECT * FROM time_records WHERE id = ?', [id]);
+    if (!rows.length) return res.status(404).json({ error: 'Record not found.' });
+    const rec = rows[0];
+
+    await db.query('DELETE FROM time_records WHERE id = ?', [id]);
+    await logActivity(req, 'DELETE_TIME_RECORD', 'time_records',
+      `Deleted time record for ${rec.first_name} ${rec.last_name} (${rec.id_number}) on ${rec.date}`);
+    res.json({ message: 'Record deleted.' });
+  } catch (err) {
+    console.error('DELETE timerecord/:id error:', err);
+    res.status(500).json({ error: 'Failed to delete record.' });
+  }
+});
+
 // ---- POST save all current attendance → time_records then clear attendance ----
 router.post('/save', requireLogin, async (req, res) => {
   try {

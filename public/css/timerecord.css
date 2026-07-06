@@ -509,3 +509,24 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
   color: var(--green-main);
   border-color: var(--green-main);
 }
+
+/* ---- Row actions group (edit + delete side by side) ---- */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Delete row button */
+.btn-delete-row {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1.5px solid #fecaca;
+  background: #fff5f5; color: #dc2626;
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.btn-delete-row:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+

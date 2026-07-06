@@ -19,6 +19,28 @@ const selectAll      = document.getElementById('selectAll');
 const toast          = document.getElementById('toast');
 const modalOverlay   = document.getElementById('modalOverlay');
 
+// ---- Digits-only enforcement for ID Number inputs ----
+function enforceDigitsOnly(input) {
+  // Block non-digit keys at keydown (catches e, +, -, ., arrows still work)
+  input.addEventListener('keydown', (e) => {
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
+    if (allowed.includes(e.key)) return;
+    if (e.ctrlKey || e.metaKey) return; // allow copy/paste shortcuts
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  });
+  // Strip any non-digits that get in via paste or autofill
+  input.addEventListener('input', () => {
+    const cleaned = input.value.replace(/\D/g, '');
+    if (input.value !== cleaned) input.value = cleaned;
+  });
+}
+
+// Apply to both Add and Edit modals once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  enforceDigitsOnly(document.getElementById('f_id'));
+  enforceDigitsOnly(document.getElementById('ef_id'));
+});
+
 // ---- Session Check (redirect to login if not logged in) ----
 (async function checkSession() {
   try {

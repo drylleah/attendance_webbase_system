@@ -90,14 +90,14 @@ async function seed() {
       )
     `);
 
-    console.log('✅ Core tables ready.');
+    console.log('Core tables ready.');
 
     // ---- Add profile columns to users if missing ----
     await addColumnIfMissing(db, 'users', 'first_name',  'VARCHAR(100) DEFAULT NULL');
     await addColumnIfMissing(db, 'users', 'last_name',   'VARCHAR(100) DEFAULT NULL');
     await addColumnIfMissing(db, 'users', 'email',       'VARCHAR(255) DEFAULT NULL');
     await addColumnIfMissing(db, 'users', 'profile_pic', 'MEDIUMTEXT DEFAULT NULL');
-    console.log('✅ Profile columns ready.');
+    console.log(' Profile columns ready.');
 
     // ---- Seed admin ----
     const [existing] = await db.execute('SELECT id FROM users WHERE username = ?', [ADMIN_USERNAME]);
@@ -107,20 +107,20 @@ async function seed() {
         'UPDATE users SET email = ? WHERE username = ? AND (email IS NULL OR email = "")',
         ['admin@lorma.edu', ADMIN_USERNAME]
       );
-      console.log('⚠️  Admin already exists. Skipping creation.');
+      console.log('Admin already exists. Skipping creation.');
     } else {
       const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
       await db.execute(
         'INSERT INTO users (username, password, role, email) VALUES (?, ?, ?, ?)',
         [ADMIN_USERNAME, hashed, 'admin', 'admin@lorma.edu']
       );
-      console.log('✅ Admin account created!');
-      console.log('   Username:', ADMIN_USERNAME);
-      console.log('   Password:', ADMIN_PASSWORD);
-      console.log('⚠️  Save this password — it will not be shown again.');
+      console.log('Admin account created!');
+      console.log('Username:', ADMIN_USERNAME);
+      console.log('Password:', ADMIN_PASSWORD);
+      console.log('Save this password — it will not be shown again.');
     }
   } catch (err) {
-    console.error('❌ Seed error:', err.message);
+    console.error(' Seed error:', err.message);
   } finally {
     await db.end();
   }
