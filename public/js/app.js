@@ -1,7 +1,7 @@
 // ============================================
-//  app.js — Frontend Logic
+//  app.js — Frontend Logic tae
 //  Handles login form, API calls, session check
-// ============================================
+// ============================================http://localhost:3000
 
 const loginCard     = document.getElementById('loginCard');
 const dashCard      = document.getElementById('dashCard');
