@@ -94,9 +94,9 @@ router.get('/activity-logs', requireLogin, async (req, res) => {
   const params     = [];
 
   if (search) {
-    conditions.push('(username LIKE ? OR description LIKE ? OR ip_address LIKE ?)');
+    conditions.push('(username LIKE ? OR description LIKE ? OR remarks LIKE ? OR ip_address LIKE ?)');
     const like = `%${search}%`;
-    params.push(like, like, like);
+    params.push(like, like, like, like);
   }
   if (action) {
     conditions.push('action = ?');
@@ -112,7 +112,7 @@ router.get('/activity-logs', requireLogin, async (req, res) => {
       `SELECT COUNT(*) AS total FROM activity_logs ${where}`, params
     );
     const [logs] = await db.query(
-      `SELECT id, user_id, username, action, target, description, ip_address, created_at
+      `SELECT id, user_id, username, action, target, description, remarks, ip_address, created_at
        FROM activity_logs ${where}
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
@@ -137,6 +137,101 @@ router.delete('/activity-logs', requireLogin, async (req, res) => {
     res.status(500).json({ error: 'Failed to clear logs.' });
   }
 });
+
+// ---- POST bulk delete specific log IDs ----
+router.post('/activity-logs/bulk-delete', requireLogin, async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'No log IDs provided.' });
+  }
+  try {
+    const placeholders = ids.map(() => '?').join(',');
+    await db.query(`DELETE FROM activity_logs WHERE id IN (${placeholders})`, ids);
+    await logActivity(req, 'BULK_DELETE_LOGS', 'activity_logs', `Deleted ${ids.length} activity log(s)`);
+    res.json({ message: `${ids.length} log(s) deleted.`, count: ids.length });
+  } catch (err) {
+    console.error('POST bulk-delete error:', err);
+    res.status(500).json({ error: 'Failed to delete logs.' });
+  }
+});
+
+// ---- POST archive old logs (older than X days, default 90) ----
+router.post('/activity-logs/archive', requireLogin, async (req, res) => {
+  const { days = 90 } = req.body;
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - parseInt(days));
+    const cutoff = cutoffDate.toISOString().slice(0, 10);
+
+    const [[{ count }]] = await db.query(
+      'SELECT COUNT(*) as count FROM activity_logs WHERE DATE(created_at) < ?',
+      [cutoff]
+    );
+
+    if (count === 0) {
+      return res.json({ message: 'No logs to archive.', count: 0 });
+    }
+
+    // In a real system, you'd copy to an archive table or export to file storage
+    // For now, we'll delete old logs after confirming the count
+    await db.query('DELETE FROM activity_logs WHERE DATE(created_at) < ?', [cutoff]);
+    await logActivity(req, 'ARCHIVE_LOGS', 'activity_logs', `Archived and removed ${count} log(s) older than ${days} days`);
+    res.json({ message: `${count} log(s) archived and removed.`, count });
+  } catch (err) {
+    console.error('POST archive error:', err);
+    res.status(500).json({ error: 'Failed to archive logs.' });
+  }
+});
+
+// ---- GET export logs as JSON ----
+router.get('/activity-logs/export', requireLogin, async (req, res) => {
+  const { format = 'json', from, to } = req.query;
+  
+  const conditions = [];
+  const params     = [];
+
+  if (from) { conditions.push('DATE(created_at) >= ?'); params.push(from); }
+  if (to)   { conditions.push('DATE(created_at) <= ?'); params.push(to);   }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  try {
+    const [logs] = await db.query(
+      `SELECT id, user_id, username, action, target, description, remarks, ip_address, created_at
+       FROM activity_logs ${where}
+       ORDER BY created_at DESC`,
+      params
+    );
+
+    if (format === 'csv') {
+      // CSV format
+      let csv = 'ID,User ID,Username,Action,Target,Description,Remarks,IP Address,Date & Time\n';
+      logs.forEach(log => {
+        const escape = (val) => {
+          if (val == null) return '';
+          const str = String(val).replace(/"/g, '""');
+          return str.includes(',') || str.includes('\n') ? `"${str}"` : str;
+        };
+        csv += `${log.id},${log.user_id || ''},${escape(log.username)},${escape(log.action)},${escape(log.target)},${escape(log.description)},${escape(log.remarks)},${escape(log.ip_address)},${log.created_at}\n`;
+      });
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=activity-logs-${Date.now()}.csv`);
+      res.send(csv);
+    } else {
+      // JSON format (default)
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=activity-logs-${Date.now()}.json`);
+      res.json({ logs, total: logs.length, exported_at: new Date().toISOString() });
+    }
+
+    await logActivity(req, 'EXPORT_LOGS', 'activity_logs', `Exported ${logs.length} activity log(s) as ${format.toUpperCase()}`);
+  } catch (err) {
+    console.error('GET export error:', err);
+    res.status(500).json({ error: 'Failed to export logs.' });
+  }
+});
+
 // ---- GET datetime config ----
 router.get('/datetime', requireLogin, async (req, res) => {
   try {

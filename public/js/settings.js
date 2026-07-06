@@ -368,20 +368,27 @@ let alTo       = '';
 
 // Action label map — converts DB action codes to friendly display text
 const ACTION_LABELS = {
-  LOGIN:                  { label: 'Login',                color: 'al-tag-info'    },
-  LOGOUT:                 { label: 'Logout',               color: 'al-tag-muted'   },
-  ADD_ATTENDANCE:         { label: 'Add Attendance',        color: 'al-tag-success' },
-  EDIT_ATTENDANCE:        { label: 'Edit Attendance',       color: 'al-tag-warning' },
-  DELETE_ATTENDANCE:      { label: 'Delete Attendance',     color: 'al-tag-danger'  },
-  CLEAR_ATTENDANCE:       { label: 'Clear Attendance',      color: 'al-tag-danger'  },
-  ADD_TIME_RECORD:        { label: 'Add Time Record',       color: 'al-tag-success' },
-  EDIT_TIME_RECORD:       { label: 'Edit Time Record',      color: 'al-tag-warning' },
-  SAVE_TO_TIME_RECORDS:   { label: 'Save to Time Records',  color: 'al-tag-success' },
-  UPDATE_PROFILE:         { label: 'Update Profile',        color: 'al-tag-info'    },
-  UPDATE_AVATAR:          { label: 'Update Avatar',         color: 'al-tag-info'    },
-  CHANGE_PASSWORD:        { label: 'Change Password',       color: 'al-tag-warning' },
-  UPDATE_DATETIME_CONFIG: { label: 'Date/Time Config',      color: 'al-tag-info'    },
-  CLEAR_ACTIVITY_LOGS:    { label: 'Clear Logs',            color: 'al-tag-danger'  },
+  LOGIN:                    { label: 'Login',                  color: 'al-tag-info'    },
+  LOGOUT:                   { label: 'Logout',                 color: 'al-tag-muted'   },
+  ADD_ATTENDANCE:           { label: 'Add Attendance',          color: 'al-tag-success' },
+  EDIT_ATTENDANCE:          { label: 'Edit Attendance',         color: 'al-tag-warning' },
+  DELETE_ATTENDANCE:        { label: 'Delete Attendance',       color: 'al-tag-danger'  },
+  CLEAR_ATTENDANCE:         { label: 'Clear Attendance',        color: 'al-tag-danger'  },
+  ADD_TIME_RECORD:          { label: 'Add Time Record',         color: 'al-tag-success' },
+  EDIT_TIME_RECORD:         { label: 'Edit Time Record',        color: 'al-tag-warning' },
+  DELETE_TIME_RECORD:       { label: 'Delete Time Record',      color: 'al-tag-danger'  },
+  SAVE_TO_TIME_RECORDS:     { label: 'Save to Time Records',    color: 'al-tag-success' },
+  UPDATE_PROFILE:           { label: 'Update Profile',          color: 'al-tag-info'    },
+  UPDATE_AVATAR:            { label: 'Update Avatar',           color: 'al-tag-info'    },
+  CHANGE_PASSWORD:          { label: 'Change Password',         color: 'al-tag-warning' },
+  UPDATE_DATETIME_CONFIG:   { label: 'Date/Time Config',        color: 'al-tag-info'    },
+  CLEAR_ACTIVITY_LOGS:      { label: 'Clear Logs',              color: 'al-tag-danger'  },
+  BULK_DELETE_LOGS:         { label: 'Bulk Delete Logs',        color: 'al-tag-danger'  },
+  ARCHIVE_LOGS:             { label: 'Archive Logs',            color: 'al-tag-warning' },
+  EXPORT_LOGS:              { label: 'Export Logs',             color: 'al-tag-info'    },
+  CREATE_INCIDENT_REPORT:   { label: 'Report Incident',         color: 'al-tag-danger'  },
+  UPDATE_INCIDENT_REPORT:   { label: 'Update Incident',         color: 'al-tag-warning' },
+  DELETE_INCIDENT_REPORT:   { label: 'Delete Incident',         color: 'al-tag-danger'  },
 };
 
 function alFormatDateTime(dt) {
@@ -408,6 +415,16 @@ function renderActivityLogs(logs) {
   tbody.innerHTML = '';
   totalLabel.textContent = `${alTotal.toLocaleString()} total log entr${alTotal === 1 ? 'y' : 'ies'}`;
 
+  // Show a warning banner if there are many logs
+  const warnBanner = document.getElementById('alLargeLogWarning');
+  if (alTotal >= 1000) {
+    warnBanner.style.display = 'flex';
+    warnBanner.querySelector('.al-warn-count').textContent =
+      `${alTotal.toLocaleString()} log entries detected.`;
+  } else {
+    warnBanner.style.display = 'none';
+  }
+
   if (!logs || logs.length === 0) {
     emptyEl.style.display = 'flex';
     renderAlPagination();
@@ -432,6 +449,9 @@ function renderActivityLogs(logs) {
       <td>${alActionTag(log.action)}</td>
       <td><span class="al-target">${log.target || '—'}</span></td>
       <td class="al-desc">${log.description || '—'}</td>
+      <td class="al-remarks">${log.remarks
+        ? `<span class="al-remarks-text">${log.remarks}</span>`
+        : '<span class="al-remarks-empty">—</span>'}</td>
       <td class="al-ip">${log.ip_address || '—'}</td>
       <td class="al-dt">${alFormatDateTime(log.created_at)}</td>
     `;
@@ -599,6 +619,10 @@ function openLogDetail(log) {
         <span class="al-detail-key">Description</span>
         <span class="al-detail-val al-detail-desc">${log.description || '—'}</span>
       </div>
+      <div class="al-detail-row al-detail-row--full">
+        <span class="al-detail-key">Remarks</span>
+        <span class="al-detail-val al-detail-desc ${log.remarks ? '' : 'al-detail-empty'}">${log.remarks || 'No remarks.'}</span>
+      </div>
       <div class="al-detail-row">
         <span class="al-detail-key">IP Address</span>
         <span class="al-detail-val al-mono">${log.ip_address || '—'}</span>
@@ -615,3 +639,80 @@ function openLogDetail(log) {
   `;
   alDetailModal.classList.add('show');
 }
+
+// ---- Export Logs ----
+document.getElementById('alExportBtn').addEventListener('click', () => {
+  document.getElementById('exportFrom').value = alFrom || '';
+  document.getElementById('exportTo').value   = alTo   || '';
+  document.getElementById('exportModal').classList.add('show');
+});
+document.getElementById('exportCancel').addEventListener('click', () => {
+  document.getElementById('exportModal').classList.remove('show');
+});
+document.getElementById('exportModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('exportModal'))
+    document.getElementById('exportModal').classList.remove('show');
+});
+document.getElementById('exportConfirm').addEventListener('click', () => {
+  const format = document.getElementById('exportFormat').value;
+  const from   = document.getElementById('exportFrom').value;
+  const to     = document.getElementById('exportTo').value;
+
+  const params = new URLSearchParams({ format });
+  if (from) params.append('from', from);
+  if (to)   params.append('to',   to);
+
+  // Trigger download via hidden anchor
+  const a = document.createElement('a');
+  a.href = `/api/settings/activity-logs/export?${params}`;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  document.getElementById('exportModal').classList.remove('show');
+  showToast('Export started — check your downloads.');
+});
+
+// ---- Archive Logs ----
+document.getElementById('alArchiveBtn').addEventListener('click', () => {
+  document.getElementById('archiveModal').classList.add('show');
+});
+document.getElementById('alWarnArchiveBtn').addEventListener('click', () => {
+  document.getElementById('archiveModal').classList.add('show');
+});
+document.getElementById('archiveCancel').addEventListener('click', () => {
+  document.getElementById('archiveModal').classList.remove('show');
+});
+document.getElementById('archiveModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('archiveModal'))
+    document.getElementById('archiveModal').classList.remove('show');
+});
+document.getElementById('archiveConfirm').addEventListener('click', async () => {
+  const days = document.getElementById('archiveDays').value;
+  try {
+    const res  = await fetch('/api/settings/activity-logs/archive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days: parseInt(days) })
+    });
+    const data = await res.json();
+    document.getElementById('archiveModal').classList.remove('show');
+    if (res.ok) {
+      alPage = 1;
+      loadActivityLogs();
+      showToast(data.count > 0
+        ? `${data.count} old log(s) archived and removed.`
+        : 'No logs were old enough to archive.');
+    } else {
+      showToast(data.error || 'Failed to archive logs.', 'error');
+    }
+  } catch {
+    showToast('Server error.', 'error');
+  }
+});
+
+// Warning banner buttons
+document.getElementById('alWarnExportBtn').addEventListener('click', () => {
+  document.getElementById('alExportBtn').click();
+});

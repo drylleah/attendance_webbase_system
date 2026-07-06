@@ -83,10 +83,30 @@ async function seed() {
         action      VARCHAR(100) NOT NULL,
         target      VARCHAR(100),
         description TEXT,
+        remarks     TEXT,
         ip_address  VARCHAR(45),
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_created_at (created_at),
         INDEX idx_user_id    (user_id)
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS incident_reports (
+        id              INT AUTO_INCREMENT PRIMARY KEY,
+        reported_by     INT,
+        reporter_name   VARCHAR(100),
+        subject_id_no   VARCHAR(50),
+        subject_name    VARCHAR(255) NOT NULL,
+        incident_date   DATE,
+        incident_type   VARCHAR(100),
+        description     TEXT NOT NULL,
+        status          ENUM('open','under_review','resolved','dismissed') DEFAULT 'open',
+        remarks         TEXT,
+        created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_status     (status),
+        INDEX idx_created_at (created_at)
       )
     `);
 
@@ -98,6 +118,10 @@ async function seed() {
     await addColumnIfMissing(db, 'users', 'email',       'VARCHAR(255) DEFAULT NULL');
     await addColumnIfMissing(db, 'users', 'profile_pic', 'MEDIUMTEXT DEFAULT NULL');
     console.log(' Profile columns ready.');
+
+    // ---- Add remarks column to activity_logs if missing ----
+    await addColumnIfMissing(db, 'activity_logs', 'remarks', 'TEXT DEFAULT NULL AFTER description');
+    console.log(' Activity log columns ready.');
 
     // ---- Seed admin ----
     const [existing] = await db.execute('SELECT id FROM users WHERE username = ?', [ADMIN_USERNAME]);

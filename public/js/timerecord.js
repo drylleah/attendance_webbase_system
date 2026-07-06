@@ -137,6 +137,9 @@ function renderTable(records, total) {
       <td class="td-date">${dateStr}</td>
       <td>
         <div class="row-actions">
+          <button class="btn-report-row" title="Report incident" data-record='${JSON.stringify(rec).replace(/'/g, "&apos;")}'>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+          </button>
           <button class="btn-edit-row" title="Edit record">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
           </button>
@@ -146,6 +149,12 @@ function renderTable(records, total) {
         </div>
       </td>
     `;
+
+    // Report button
+    tr.querySelector('.btn-report-row').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openReportModal(rec);
+    });
 
     // Edit button
     tr.querySelector('.btn-edit-row').addEventListener('click', (e) => {
@@ -336,5 +345,59 @@ document.getElementById('modalSave').addEventListener('click', async () => {
     }
   } catch {
     showToast('Server error. Try again.', 'error');
+  }
+});
+
+
+// ========== REPORT INCIDENT MODAL ==========
+const reportModal = document.getElementById('reportModal');
+
+function openReportModal(rec) {
+  const fullName = `${rec.first_name} ${rec.last_name}`;
+  document.getElementById('reportSubjectName').value = fullName;
+  document.getElementById('reportSubjectId').value   = rec.id_number || '';
+  document.getElementById('reportIncidentDate').value = rec.date || '';
+  document.getElementById('reportDescription').value = '';
+  document.getElementById('reportRemarks').value = '';
+  reportModal.classList.add('show');
+}
+
+document.getElementById('reportCancel').addEventListener('click', () => {
+  reportModal.classList.remove('show');
+});
+reportModal.addEventListener('click', (e) => {
+  if (e.target === reportModal) reportModal.classList.remove('show');
+});
+
+document.getElementById('reportSubmit').addEventListener('click', async () => {
+  const subject_name   = document.getElementById('reportSubjectName').value.trim();
+  const subject_id_no  = document.getElementById('reportSubjectId').value.trim();
+  const incident_date  = document.getElementById('reportIncidentDate').value;
+  const incident_type  = document.getElementById('reportIncidentType').value;
+  const description    = document.getElementById('reportDescription').value.trim();
+  const remarks        = document.getElementById('reportRemarks').value.trim();
+
+  if (!subject_name || !description) {
+    showToast('Subject name and description are required.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject_name, subject_id_no, incident_date, incident_type, description, remarks
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      reportModal.classList.remove('show');
+      showToast('Incident report submitted successfully.');
+    } else {
+      showToast(data.error || 'Failed to submit incident report.', 'error');
+    }
+  } catch {
+    showToast('Server error. Please try again.', 'error');
   }
 });

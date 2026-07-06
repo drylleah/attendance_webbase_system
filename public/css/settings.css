@@ -423,6 +423,26 @@ body {
   justify-content: space-between;
 }
 
+.al-export-btn,
+.al-archive-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: #fff;
+  color: var(--green-main);
+  border: 1.5px solid var(--green-main);
+  border-radius: 7px;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer; font-family: var(--font);
+  transition: background 0.15s, color 0.15s;
+}
+.al-export-btn:hover, .al-archive-btn:hover {
+  background: var(--green-main);
+  color: #fff;
+}
+.al-export-btn svg, .al-archive-btn svg {
+  width: 15px; height: 15px;
+}
+
 .al-clear-btn {
   display: flex; align-items: center; gap: 6px;
   padding: 7px 14px;
@@ -439,6 +459,41 @@ body {
 
 /* Filters */
 .al-filters { display: flex; flex-direction: column; gap: 10px; }
+
+/* Large log warning banner */
+.al-warn-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 8px;
+  font-size: 13px; color: #92400e;
+  margin-bottom: 12px;
+}
+.al-warn-banner svg {
+  width: 20px; height: 20px;
+  color: #f59e0b; flex-shrink: 0;
+}
+.al-warn-banner .al-warn-count {
+  font-weight: 700;
+}
+.al-warn-export-btn,
+.al-warn-archive-btn {
+  margin-left: auto;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1.5px solid #fbbf24;
+  border-radius: 6px;
+  font-size: 12px; font-weight: 600;
+  color: #92400e;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font);
+}
+.al-warn-export-btn:hover,
+.al-warn-archive-btn:hover {
+  background: #fef3c7;
+}
 
 .al-filter-search {
   display: flex; align-items: center; gap: 10px;
@@ -526,6 +581,9 @@ body {
 /* Columns */
 .al-num    { width: 42px; color: var(--text-muted) !important; font-size: 12px; }
 .al-desc   { max-width: 260px; white-space: normal; word-break: break-word; line-height: 1.4; }
+.al-remarks { max-width: 200px; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 12.5px; }
+.al-remarks-text { color: var(--text-body); font-style: italic; }
+.al-remarks-empty { color: var(--text-muted); }
 .al-ip     { font-family: monospace; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .al-dt     { white-space: nowrap; font-size: 12px; color: var(--text-muted); }
 .al-mono   { font-family: monospace; font-size: 12.5px; }
@@ -637,6 +695,11 @@ body {
   background: #f9fafb; border: 1px solid var(--border);
   border-radius: 8px; padding: 10px 14px;
   color: var(--text-dark); display: block; width: 100%;
+}
+.al-detail-empty {
+  background: #fafafa;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 /* Edit button on table rows */

@@ -1,6 +1,6 @@
 /**
  * logger.js — Activity log helper
- * Call logActivity(req, action, target, description) from any route.
+ * Call logActivity(req, action, target, description, remarks) from any route.
  */
 const db = require('./db');
 
@@ -9,8 +9,9 @@ const db = require('./db');
  * @param {string} action   — e.g. 'ADD_ATTENDANCE', 'DELETE_RECORDS'
  * @param {string} target   — which table / resource, e.g. 'attendance', 'time_records'
  * @param {string} description — human-readable summary
+ * @param {string} remarks  — optional additional notes or context
  */
-async function logActivity(req, action, target, description) {
+async function logActivity(req, action, target, description, remarks = null) {
   try {
     const userId   = req.session?.userId   || null;
     const username = req.session?.username || 'unknown';
@@ -19,9 +20,9 @@ async function logActivity(req, action, target, description) {
                      || null;
 
     await db.query(
-      `INSERT INTO activity_logs (user_id, username, action, target, description, ip_address)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, username, action, target || null, description || null, ip]
+      `INSERT INTO activity_logs (user_id, username, action, target, description, remarks, ip_address)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [userId, username, action, target || null, description || null, remarks, ip]
     );
   } catch (err) {
     // Logging must never crash the main request
