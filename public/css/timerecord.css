@@ -439,7 +439,7 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
 /* ========== PRINT (Preview Time Records) ========== */
 @page {
   size: landscape;
-  margin: 12mm;
+  margin: 0;
 }
 @media print {
   /* Hide everything not part of the data */
@@ -450,7 +450,15 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
   .filter-card,
   .table-footer,
   .modal-overlay,
-  .toast {
+  .toast,
+  /* Hide action buttons and checkbox column */
+  .row-check,
+  .row-cb,
+  .row-actions,
+  .btn-report-row,
+  .btn-edit-row,
+  thead tr th:last-child,
+  tbody tr td:last-child {
     display: none !important;
   }
 
@@ -558,4 +566,49 @@ tbody td { padding: 13px 16px; color: var(--text-dark); vertical-align: middle; 
 }
 .btn-report-submit:hover {
   background: #b45309;
+}
+
+/* ---- Month filter + Delete button side by side ---- */
+.month-delete-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-delete-selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  background: #fff5f5;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font, 'Inter', sans-serif);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-delete-selected:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+.btn-delete-selected svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* ---- Checkbox column ---- */
+.row-check {
+  width: 36px;
+  text-align: center;
+}
+.row-cb {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: var(--green-main, #1e5f4e);
 }
