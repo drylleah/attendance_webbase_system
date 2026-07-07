@@ -44,7 +44,7 @@ router.get('/', requireLogin, async (req, res) => {
 
 // ---- POST manually add a new time record ----
 router.post('/', requireLogin, async (req, res) => {
-  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date } = req.body;
+  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks } = req.body;
 
   if (!id_number || !last_name || !first_name) {
     return res.status(400).json({ error: 'ID Number, Last Name, and First Name are required.' });
@@ -56,12 +56,13 @@ router.post('/', requireLogin, async (req, res) => {
     const timeOutStr = time_out ? `${dateStr} ${time_out}` : null;
 
     await db.query(
-      `INSERT INTO time_records (id_number, last_name, first_name, middle_initial, time_in, time_out, date)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id_number, last_name, first_name, middle_initial || null, timeInStr, timeOutStr, dateStr]
+      `INSERT INTO time_records (id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id_number, last_name, first_name, middle_initial || null, timeInStr, timeOutStr, dateStr, remarks || null]
     );
     await logActivity(req, 'ADD_TIME_RECORD', 'time_records',
-      `Manually added time record for ${first_name} ${last_name} (${id_number}) on ${dateStr}`);
+      `Manually added time record for ${first_name} ${last_name} (${id_number}) on ${dateStr}`,
+      remarks || null);
     res.json({ message: 'Entry added successfully.' });
   } catch (err) {
     console.error('POST timerecord error:', err);
@@ -72,7 +73,7 @@ router.post('/', requireLogin, async (req, res) => {
 // ---- PUT edit a time record ----
 router.put('/:id', requireLogin, async (req, res) => {
   const { id } = req.params;
-  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date } = req.body;
+  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks } = req.body;
 
   if (!id_number || !last_name || !first_name) {
     return res.status(400).json({ error: 'ID Number, Last Name, and First Name are required.' });
@@ -89,8 +90,8 @@ router.put('/:id', requireLogin, async (req, res) => {
 
     await db.query(
       `UPDATE time_records SET id_number=?, last_name=?, first_name=?, middle_initial=?,
-       time_in=?, time_out=?, date=? WHERE id=?`,
-      [id_number, last_name, first_name, middle_initial || null, timeInStr, timeOutStr, dateStr, id]
+       time_in=?, time_out=?, date=?, remarks=? WHERE id=?`,
+      [id_number, last_name, first_name, middle_initial || null, timeInStr, timeOutStr, dateStr, remarks || null, id]
     );
 
     const fmt = (dt) => {
@@ -117,7 +118,7 @@ router.put('/:id', requireLogin, async (req, res) => {
       ? `Edited time record for ${name} — ${diffs.join('; ')}`
       : `Edited time record for ${name} (no changes detected)`;
 
-    await logActivity(req, 'EDIT_TIME_RECORD', 'time_records', desc);
+    await logActivity(req, 'EDIT_TIME_RECORD', 'time_records', desc, remarks || null);
     res.json({ message: 'Record updated successfully.' });
   } catch (err) {
     console.error('PUT timerecord error:', err);
@@ -152,10 +153,10 @@ router.post('/save', requireLogin, async (req, res) => {
       return res.status(400).json({ error: 'No attendance records to save.' });
     }
 
-    // Copy attendance → time_records
+    // Copy attendance → time_records (carry remarks along)
     await db.query(`
-      INSERT INTO time_records (id_number, last_name, first_name, middle_initial, time_in, time_out, date)
-      SELECT id_number, last_name, first_name, middle_initial, time_in, time_out, date
+      INSERT INTO time_records (id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks)
+      SELECT id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks
       FROM attendance
     `);
 

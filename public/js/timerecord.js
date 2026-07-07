@@ -135,6 +135,7 @@ function renderTable(records, total) {
         ? `<div class="time-out-block"><div class="t">${toTime}</div><div class="ap">${toAmPm}</div></div>`
         : '<span class="time-empty">--:--</span>'}</td>
       <td class="td-date">${dateStr}</td>
+      <td class="td-remarks">${rec.remarks ? `<span class="remarks-text">${rec.remarks}</span>` : '<span class="remarks-empty">—</span>'}</td>
       <td>
         <div class="row-actions">
           <button class="btn-report-row" title="Report incident" data-record='${JSON.stringify(rec).replace(/'/g, "&apos;")}'>
@@ -211,6 +212,7 @@ function openEditModal(rec) {
   document.getElementById('ef_timein').value  = toTimeInput(rec.time_in);
   document.getElementById('ef_timeout').value = toTimeInput(rec.time_out);
   document.getElementById('ef_date').value    = toDateInput(rec.time_in || rec.date);
+  document.getElementById('ef_remarks').value = rec.remarks || '';
   editModalOverlay.classList.add('show');
 }
 
@@ -231,6 +233,7 @@ document.getElementById('editModalSave').addEventListener('click', async () => {
   const time_in        = document.getElementById('ef_timein').value;
   const time_out       = document.getElementById('ef_timeout').value;
   const date           = document.getElementById('ef_date').value;
+  const remarks        = document.getElementById('ef_remarks').value.trim();
 
   if (!id_number || !last_name || !first_name) {
     showToast('ID Number, Last Name, and First Name are required.', 'error');
@@ -240,7 +243,7 @@ document.getElementById('editModalSave').addEventListener('click', async () => {
     const res  = await fetch(`/api/timerecord/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks })
     });
     const data = await res.json();
     if (res.ok) {
@@ -323,6 +326,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
   const time_in        = document.getElementById('f_timein').value;
   const time_out       = document.getElementById('f_timeout').value;
   const date           = document.getElementById('f_date').value;
+  const remarks        = document.getElementById('f_remarks').value.trim();
 
   if (!id_number || !last_name || !first_name) {
     showToast('ID Number, Last Name, and First Name are required.', 'error');
@@ -332,7 +336,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
     const res = await fetch('/api/timerecord', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks })
     });
     const data = await res.json();
     if (res.ok) {
@@ -354,11 +358,12 @@ const reportModal = document.getElementById('reportModal');
 
 function openReportModal(rec) {
   const fullName = `${rec.first_name} ${rec.last_name}`;
-  document.getElementById('reportSubjectName').value = fullName;
-  document.getElementById('reportSubjectId').value   = rec.id_number || '';
-  document.getElementById('reportIncidentDate').value = rec.date || '';
-  document.getElementById('reportDescription').value = '';
-  document.getElementById('reportRemarks').value = '';
+  document.getElementById('reportSubjectName').value  = fullName;
+  document.getElementById('reportSubjectId').value    = rec.id_number || '';
+  document.getElementById('reportIncidentDate').value = rec.date
+    ? new Date(rec.date).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  document.getElementById('reportDescription').value  = '';
   reportModal.classList.add('show');
 }
 
@@ -370,12 +375,11 @@ reportModal.addEventListener('click', (e) => {
 });
 
 document.getElementById('reportSubmit').addEventListener('click', async () => {
-  const subject_name   = document.getElementById('reportSubjectName').value.trim();
-  const subject_id_no  = document.getElementById('reportSubjectId').value.trim();
-  const incident_date  = document.getElementById('reportIncidentDate').value;
-  const incident_type  = document.getElementById('reportIncidentType').value;
-  const description    = document.getElementById('reportDescription').value.trim();
-  const remarks        = document.getElementById('reportRemarks').value.trim();
+  const subject_name  = document.getElementById('reportSubjectName').value.trim();
+  const subject_id_no = document.getElementById('reportSubjectId').value.trim();
+  const incident_date = document.getElementById('reportIncidentDate').value;
+  const incident_type = document.getElementById('reportIncidentType').value;
+  const description   = document.getElementById('reportDescription').value.trim();
 
   if (!subject_name || !description) {
     showToast('Subject name and description are required.', 'error');
@@ -386,9 +390,7 @@ document.getElementById('reportSubmit').addEventListener('click', async () => {
     const res = await fetch('/api/incidents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subject_name, subject_id_no, incident_date, incident_type, description, remarks
-      })
+      body: JSON.stringify({ subject_name, subject_id_no, incident_date, incident_type, description })
     });
     const data = await res.json();
     if (res.ok) {

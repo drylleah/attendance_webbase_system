@@ -44,6 +44,7 @@ async function seed() {
         time_in DATETIME,
         time_out DATETIME,
         date DATE,
+        remarks TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -57,6 +58,7 @@ async function seed() {
         time_in DATETIME,
         time_out DATETIME,
         date DATE,
+        remarks TEXT,
         saved_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -135,6 +137,14 @@ async function seed() {
     // ---- Add remarks column to activity_logs if missing ----
     await addColumnIfMissing(db, 'activity_logs', 'remarks', 'TEXT DEFAULT NULL AFTER description');
     console.log(' Activity log columns ready.');
+
+    // ---- Add remarks column to attendance if missing ----
+    await addColumnIfMissing(db, 'attendance', 'remarks', 'TEXT DEFAULT NULL');
+    console.log(' Attendance columns ready.');
+
+    // ---- Add remarks column to time_records if missing ----
+    await addColumnIfMissing(db, 'time_records', 'remarks', 'TEXT DEFAULT NULL');
+    console.log(' Time record columns ready.');
 
     // ---- Seed admin ----
     const [existing] = await db.execute('SELECT id FROM users WHERE username = ?', [ADMIN_USERNAME]);

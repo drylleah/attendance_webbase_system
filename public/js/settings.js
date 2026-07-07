@@ -452,7 +452,6 @@ function renderActivityLogs(logs) {
       <td class="al-remarks">${log.remarks
         ? `<span class="al-remarks-text">${log.remarks}</span>`
         : '<span class="al-remarks-empty">—</span>'}</td>
-      <td class="al-ip">${log.ip_address || '—'}</td>
       <td class="al-dt">${alFormatDateTime(log.created_at)}</td>
     `;
     tr.addEventListener('click', () => openLogDetail(log));
@@ -624,16 +623,8 @@ function openLogDetail(log) {
         <span class="al-detail-val al-detail-desc ${log.remarks ? '' : 'al-detail-empty'}">${log.remarks || 'No remarks.'}</span>
       </div>
       <div class="al-detail-row">
-        <span class="al-detail-key">IP Address</span>
-        <span class="al-detail-val al-mono">${log.ip_address || '—'}</span>
-      </div>
-      <div class="al-detail-row">
         <span class="al-detail-key">Date &amp; Time</span>
         <span class="al-detail-val">${alFormatDateTime(log.created_at)}</span>
-      </div>
-      <div class="al-detail-row">
-        <span class="al-detail-key">Log ID</span>
-        <span class="al-detail-val al-mono">#${log.id}</span>
       </div>
     </div>
   `;

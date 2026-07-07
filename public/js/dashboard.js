@@ -192,10 +192,16 @@ function renderTable(records) {
           : '<span class="time-empty">- : - -</span>'}
       </td>
       <td>${dateStr}</td>
+      <td class="td-remarks">${rec.remarks ? `<span class="remarks-text">${rec.remarks}</span>` : '<span class="remarks-empty">—</span>'}</td>
       <td>
-        <button class="btn-edit-row" data-id="${rec.id}" title="Edit record">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
-        </button>
+        <div class="row-actions">
+          <button class="btn-report-row" data-id="${rec.id}" title="Report incident">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+          </button>
+          <button class="btn-edit-row" data-id="${rec.id}" title="Edit record">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+          </button>
+        </div>
       </td>
     `;
 
@@ -207,10 +213,20 @@ function renderTable(records) {
   // Sync select-all
   selectAll.checked = false;
 
-  // Attach edit button listeners
+  // Attach row button listeners
+  document.querySelectorAll('.btn-report-row').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id  = btn.dataset.id;
+      const row = attendanceBody.querySelector(`tr[data-id="${id}"]`);
+      const rec = JSON.parse(row.dataset.record);
+      openReportModal(rec);
+    });
+  });
+
   document.querySelectorAll('.btn-edit-row').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // don't trigger row click
+      e.stopPropagation();
       const id  = btn.dataset.id;
       const row = attendanceBody.querySelector(`tr[data-id="${id}"]`);
       const rec = JSON.parse(row.dataset.record);
@@ -245,6 +261,7 @@ function openEditModal(rec) {
   document.getElementById('ef_timein').value  = toTimeInput(rec.time_in);
   document.getElementById('ef_timeout').value = toTimeInput(rec.time_out);
   document.getElementById('ef_date').value    = toDateInput(rec.time_in || rec.date);
+  document.getElementById('ef_remarks').value = rec.remarks || '';
   editModalOverlay.classList.add('show');
 }
 
@@ -265,6 +282,7 @@ document.getElementById('editModalSave').addEventListener('click', async () => {
   const time_in        = document.getElementById('ef_timein').value;
   const time_out       = document.getElementById('ef_timeout').value;
   const date           = document.getElementById('ef_date').value;
+  const remarks        = document.getElementById('ef_remarks').value.trim();
 
   if (!id_number || !last_name || !first_name) {
     showToast('ID Number, Last Name, and First Name are required.', 'error');
@@ -274,7 +292,7 @@ document.getElementById('editModalSave').addEventListener('click', async () => {
     const res  = await fetch(`/api/attendance/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks })
     });
     const data = await res.json();
     if (res.ok) {
@@ -350,6 +368,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
   const time_in       = document.getElementById('f_timein').value;
   const time_out      = document.getElementById('f_timeout').value;
   const date          = document.getElementById('f_date').value;
+  const remarks       = document.getElementById('f_remarks').value.trim();
 
   if (!id_number || !last_name || !first_name) {
     showToast('ID Number, Last Name, and First Name are required.', 'error');
@@ -360,7 +379,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
     const res = await fetch('/api/attendance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date })
+      body: JSON.stringify({ id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks })
     });
     const data = await res.json();
     if (res.ok) {
@@ -423,4 +442,54 @@ document.getElementById('btnSaveToTimeRecord').addEventListener('click', async (
 document.getElementById('btnRefresh').addEventListener('click', () => {
   loadAttendance(searchInput.value.trim());
   showToast('Attendance stream refreshed.');
+});
+
+// ========== REPORT INCIDENT MODAL ==========
+const reportModal = document.getElementById('reportModal');
+
+function openReportModal(rec) {
+  document.getElementById('reportSubjectName').value  = `${rec.first_name} ${rec.last_name}`;
+  document.getElementById('reportSubjectId').value    = rec.id_number || '';
+  document.getElementById('reportIncidentDate').value = rec.date
+    ? new Date(rec.date).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10);
+  document.getElementById('reportDescription').value  = '';
+  reportModal.classList.add('show');
+}
+
+document.getElementById('reportCancel').addEventListener('click', () => {
+  reportModal.classList.remove('show');
+});
+reportModal.addEventListener('click', (e) => {
+  if (e.target === reportModal) reportModal.classList.remove('show');
+});
+
+document.getElementById('reportSubmit').addEventListener('click', async () => {
+  const subject_name  = document.getElementById('reportSubjectName').value.trim();
+  const subject_id_no = document.getElementById('reportSubjectId').value.trim();
+  const incident_date = document.getElementById('reportIncidentDate').value;
+  const incident_type = document.getElementById('reportIncidentType').value;
+  const description   = document.getElementById('reportDescription').value.trim();
+
+  if (!subject_name || !description) {
+    showToast('Subject name and description are required.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject_name, subject_id_no, incident_date, incident_type, description })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      reportModal.classList.remove('show');
+      showToast('Incident report submitted successfully.');
+    } else {
+      showToast(data.error || 'Failed to submit report.', 'error');
+    }
+  } catch {
+    showToast('Server error. Please try again.', 'error');
+  }
 });

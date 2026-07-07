@@ -39,26 +39,26 @@ router.get('/', requireLogin, async (req, res) => {
 
 // ---- POST new attendance record ----
 router.post('/', requireLogin, async (req, res) => {
-  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date } = req.body;
+  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks } = req.body;
 
   if (!id_number || !last_name || !first_name) {
     return res.status(400).json({ error: 'ID Number, Last Name, and First Name are required.' });
   }
 
   try {
-    // Combine date + time_in into a datetime string
-    const dateStr      = date || new Date().toISOString().slice(0, 10);
-    const timeInStr     = time_in || new Date().toTimeString().slice(0, 8);
-    const timeInDate    = `${dateStr} ${timeInStr}`;
-    const timeOutDate   = time_out ? `${dateStr} ${time_out}` : null;
+    const dateStr    = date    || new Date().toISOString().slice(0, 10);
+    const timeInStr  = time_in || new Date().toTimeString().slice(0, 8);
+    const timeInDate  = `${dateStr} ${timeInStr}`;
+    const timeOutDate = time_out ? `${dateStr} ${time_out}` : null;
 
     await db.query(
-      `INSERT INTO attendance (id_number, last_name, first_name, middle_initial, time_in, time_out, date)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id_number, last_name, first_name, middle_initial || null, timeInDate, timeOutDate, dateStr]
+      `INSERT INTO attendance (id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id_number, last_name, first_name, middle_initial || null, timeInDate, timeOutDate, dateStr, remarks || null]
     );
     await logActivity(req, 'ADD_ATTENDANCE', 'attendance',
-      `Added attendance record for ${first_name} ${last_name} (${id_number}) on ${dateStr}`);
+      `Added attendance record for ${first_name} ${last_name} (${id_number}) on ${dateStr}`,
+      remarks || null);
     res.json({ message: 'Record added successfully.' });
   } catch (err) {
     console.error('POST attendance error:', err);
@@ -69,14 +69,13 @@ router.post('/', requireLogin, async (req, res) => {
 // ---- PUT edit an attendance record ----
 router.put('/:id', requireLogin, async (req, res) => {
   const { id } = req.params;
-  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date } = req.body;
+  const { id_number, last_name, first_name, middle_initial, time_in, time_out, date, remarks } = req.body;
 
   if (!id_number || !last_name || !first_name) {
     return res.status(400).json({ error: 'ID Number, Last Name, and First Name are required.' });
   }
 
   try {
-    // Fetch old values for diff
     const [oldRows] = await db.query('SELECT * FROM attendance WHERE id = ?', [id]);
     if (!oldRows.length) return res.status(404).json({ error: 'Record not found.' });
     const old = oldRows[0];
@@ -87,11 +86,10 @@ router.put('/:id', requireLogin, async (req, res) => {
 
     await db.query(
       `UPDATE attendance SET id_number=?, last_name=?, first_name=?, middle_initial=?,
-       time_in=?, time_out=?, date=? WHERE id=?`,
-      [id_number, last_name, first_name, middle_initial || null, timeInDate, timeOutDate, dateStr, id]
+       time_in=?, time_out=?, date=?, remarks=? WHERE id=?`,
+      [id_number, last_name, first_name, middle_initial || null, timeInDate, timeOutDate, dateStr, remarks || null, id]
     );
 
-    // Build human-readable diff
     const fmt = (dt) => {
       if (!dt) return '—';
       const d = new Date(dt);
@@ -110,13 +108,15 @@ router.put('/:id', requireLogin, async (req, res) => {
       diffs.push(`time in from ${fmt(old.time_in)} to ${fmt(timeInDate)}`);
     if (fmt(old.time_out) !== fmt(timeOutDate))
       diffs.push(`time out from ${fmt(old.time_out)} to ${fmt(timeOutDate)}`);
+    if ((old.remarks || '') !== (remarks || ''))
+      diffs.push(`remarks updated`);
 
     const name = `${first_name} ${last_name} (${id_number})`;
     const desc = diffs.length
       ? `Edited attendance for ${name} — ${diffs.join('; ')}`
       : `Edited attendance for ${name} (no changes detected)`;
 
-    await logActivity(req, 'EDIT_ATTENDANCE', 'attendance', desc);
+    await logActivity(req, 'EDIT_ATTENDANCE', 'attendance', desc, remarks || null);
     res.json({ message: 'Record updated successfully.' });
   } catch (err) {
     console.error('PUT attendance error:', err);

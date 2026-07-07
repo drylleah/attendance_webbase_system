@@ -615,3 +615,46 @@ input[type="checkbox"] {
 /* Clickable row cursor */
 tr.clickable-row { cursor: default; }
 
+
+/* ---- Row action buttons (report + edit side by side) ---- */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-report-row {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1.5px solid #fde68a;
+  background: #fffbeb; color: #d97706;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-report-row:hover {
+  background: #fef3c7;
+  border-color: #fbbf24;
+  color: #b45309;
+}
+
+/* ---- Remarks cell in attendance table ---- */
+.td-remarks {
+  max-width: 180px;
+  white-space: normal;
+  word-break: break-word;
+  font-size: 12.5px;
+}
+.remarks-text  { color: #374151; font-style: italic; }
+.remarks-empty { color: #d1d5db; }
+
+/* ---- Report Incident modal (wider to fit textarea) ---- */
+.modal-report { max-width: 520px; }
+.modal-report textarea {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.btn-report-submit {
+  background: #d97706 !important;
+}
+.btn-report-submit:hover {
+  background: #b45309 !important;
+}
